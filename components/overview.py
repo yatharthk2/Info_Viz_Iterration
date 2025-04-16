@@ -16,7 +16,11 @@ from utils.visualization import (
     create_cpi_comparison_chart,
     create_feature_importance_chart,
     create_prediction_comparison_chart,
-    create_heatmap
+    create_heatmap,
+    create_type_distribution_chart,
+    create_cpi_distribution_boxplot,
+    create_cpi_vs_ir_scatter,
+    create_cpi_efficiency_chart
 )
 
 # Import theme utilities

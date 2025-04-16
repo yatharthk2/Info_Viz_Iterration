@@ -87,6 +87,570 @@ def set_plotly_theme() -> None:
         hovermode="closest"
     )
 
+def create_type_distribution_chart(data: pd.DataFrame) -> go.Figure:
+    """
+    Create a pie chart showing the distribution of won vs lost bids.
+    
+    Args:
+        data (pd.DataFrame): DataFrame with Type column
+        
+    Returns:
+        go.Figure: Plotly figure with type distribution visualization
+    """
+    try:
+        # Count the number of won and lost bids
+        type_counts = data['Type'].value_counts().reset_index()
+        type_counts.columns = ['Type', 'Count']
+        
+        # Calculate percentages
+        total = type_counts['Count'].sum()
+        type_counts['Percentage'] = type_counts['Count'] / total * 100
+        
+        # Create custom text
+        type_counts['Text'] = type_counts.apply(
+            lambda x: f"{x['Type']}: {x['Count']} ({x['Percentage']:.1f}%)", axis=1)
+        
+        # Create color map based on Type
+        colors = [DARK_THEME_COLORS['won'] if t == 'Won' else DARK_THEME_COLORS['lost'] 
+                 for t in type_counts['Type']]
+        
+        # Create pie chart with Plotly
+        fig = go.Figure(data=[go.Pie(
+            labels=type_counts['Type'],
+            values=type_counts['Count'],
+            text=type_counts['Text'],
+            hovertemplate="<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>",
+            textinfo='text',
+            marker=dict(
+                colors=colors,
+                line=dict(color='rgba(255,255,255,0.3)', width=2)
+            ),
+            hole=0.4,
+        )])
+        
+        # Add title and styling
+        fig.update_layout(
+            title={
+                'text': 'Distribution of Won vs Lost Bids',
+                'font': {'size': 20, 'color': 'white'},
+                'y': 0.95,
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            legend=dict(
+                font=dict(color='white', size=12),
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='center',
+                x=0.5,
+                bgcolor='rgba(0,0,0,0.2)',
+                bordercolor='rgba(255,255,255,0.3)',
+                borderwidth=1
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white'),
+            height=400,
+            annotations=[dict(
+                text='Total Bids:<br><b>' + str(total) + '</b>',
+                x=0.5, y=0.5,
+                font=dict(size=14, color='white'),
+                showarrow=False
+            )]
+        )
+        
+        return fig
+    
+    except Exception as e:
+        logger.error(f"Error creating type distribution chart: {e}", exc_info=True)
+        # Return a minimal figure if error occurs
+        fig = go.Figure()
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=400
+        )
+        return fig
+
+def create_cpi_distribution_boxplot(won_data: pd.DataFrame, lost_data: pd.DataFrame) -> go.Figure:
+    """
+    Create a boxplot showing the distribution of CPI values for won and lost bids.
+    
+    Args:
+        won_data (pd.DataFrame): DataFrame of Won bids
+        lost_data (pd.DataFrame): DataFrame of Lost bids
+        
+    Returns:
+        go.Figure: Plotly figure with CPI distribution visualization
+    """
+    try:
+        # Create figure
+        fig = go.Figure()
+        
+        # Add box plot for won bids
+        fig.add_trace(go.Box(
+            y=won_data['CPI'],
+            name='Won Bids',
+            marker_color=DARK_THEME_COLORS['won'],
+            boxmean=True,
+            boxpoints='outliers',
+            jitter=0.3,
+            whiskerwidth=0.2,
+            marker=dict(
+                size=4,
+                opacity=0.7,
+                line=dict(width=1, color='rgba(255,255,255,0.3)')
+            ),
+            line=dict(width=2),
+            hoverinfo='y',
+            hovertemplate="<b>Won Bid</b><br>CPI: $%{y:.2f}<extra></extra>"
+        ))
+        
+        # Add box plot for lost bids
+        fig.add_trace(go.Box(
+            y=lost_data['CPI'],
+            name='Lost Bids',
+            marker_color=DARK_THEME_COLORS['lost'],
+            boxmean=True,
+            boxpoints='outliers',
+            jitter=0.3,
+            whiskerwidth=0.2,
+            marker=dict(
+                size=4,
+                opacity=0.7,
+                line=dict(width=1, color='rgba(255,255,255,0.3)')
+            ),
+            line=dict(width=2),
+            hoverinfo='y',
+            hovertemplate="<b>Lost Bid</b><br>CPI: $%{y:.2f}<extra></extra>"
+        ))
+        
+        # Add mean lines and annotations
+        won_mean = won_data['CPI'].mean()
+        lost_mean = lost_data['CPI'].mean()
+        diff_pct = ((lost_mean - won_mean) / won_mean * 100) if won_mean > 0 else 0
+        
+        # Update layout
+        fig.update_layout(
+            title={
+                'text': 'CPI Distribution: Won vs Lost Bids',
+                'font': {'size': 20, 'color': 'white'},
+                'y': 0.95,
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            yaxis=dict(
+                title='CPI ($)',
+                gridcolor='rgba(255,255,255,0.1)',
+                zerolinecolor='rgba(255,255,255,0.1)',
+                tickprefix='$',
+                titlefont=dict(color='white'),
+                tickfont=dict(color='white')
+            ),
+            xaxis=dict(
+                gridcolor='rgba(255,255,255,0.1)',
+                zerolinecolor='rgba(255,255,255,0.1)',
+                titlefont=dict(color='white'),
+                tickfont=dict(color='white')
+            ),
+            legend=dict(
+                font=dict(color='white', size=12),
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='center',
+                x=0.5,
+                bgcolor='rgba(0,0,0,0.2)',
+                bordercolor='rgba(255,255,255,0.3)',
+                borderwidth=1
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white'),
+            margin=dict(l=50, r=40, t=80, b=50),
+            height=500,
+            annotations=[
+                dict(
+                    x=0, y=won_mean,
+                    xref='x', yref='y',
+                    text=f"Mean: ${won_mean:.2f}",
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowsize=1,
+                    arrowwidth=2,
+                    arrowcolor=DARK_THEME_COLORS['won'],
+                    ax=-80, ay=0,
+                    font=dict(color=DARK_THEME_COLORS['won'], size=12),
+                    bgcolor='rgba(0,0,0,0.5)',
+                    borderpad=4
+                ),
+                dict(
+                    x=1, y=lost_mean,
+                    xref='x', yref='y',
+                    text=f"Mean: ${lost_mean:.2f}<br>+{diff_pct:.1f}%",
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowsize=1,
+                    arrowwidth=2,
+                    arrowcolor=DARK_THEME_COLORS['lost'],
+                    ax=80, ay=0,
+                    font=dict(color=DARK_THEME_COLORS['lost'], size=12),
+                    bgcolor='rgba(0,0,0,0.5)',
+                    borderpad=4
+                )
+            ]
+        )
+        
+        return fig
+    
+    except Exception as e:
+        logger.error(f"Error creating CPI distribution boxplot: {e}", exc_info=True)
+        # Return a minimal figure if error occurs
+        fig = go.Figure()
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=500
+        )
+        return fig
+
+def create_cpi_vs_ir_scatter(won_data: pd.DataFrame, lost_data: pd.DataFrame) -> go.Figure:
+    """
+    Create a scatter plot of CPI vs IR for won and lost bids.
+    
+    Args:
+        won_data (pd.DataFrame): DataFrame of Won bids
+        lost_data (pd.DataFrame): DataFrame of Lost bids
+        
+    Returns:
+        go.Figure: Plotly figure with scatter plot visualization
+    """
+    try:
+        # Create figure
+        fig = go.Figure()
+        
+        # Add scatter plot for won bids
+        fig.add_trace(go.Scatter(
+            x=won_data['IR'],
+            y=won_data['CPI'],
+            mode='markers',
+            name='Won Bids',
+            marker=dict(
+                color=DARK_THEME_COLORS['won'],
+                size=10,
+                opacity=0.7,
+                line=dict(width=1, color='rgba(255,255,255,0.3)')
+            ),
+            hovertemplate="<b>Won Bid</b><br>IR: %{x}%<br>CPI: $%{y:.2f}<br>LOI: %{customdata[0]} min<br>Completes: %{customdata[1]}<extra></extra>",
+            customdata=np.column_stack((won_data['LOI'], won_data['Completes']))
+        ))
+        
+        # Add scatter plot for lost bids
+        fig.add_trace(go.Scatter(
+            x=lost_data['IR'],
+            y=lost_data['CPI'],
+            mode='markers',
+            name='Lost Bids',
+            marker=dict(
+                color=DARK_THEME_COLORS['lost'],
+                size=10,
+                opacity=0.7,
+                line=dict(width=1, color='rgba(255,255,255,0.3)')
+            ),
+            hovertemplate="<b>Lost Bid</b><br>IR: %{x}%<br>CPI: $%{y:.2f}<br>LOI: %{customdata[0]} min<br>Completes: %{customdata[1]}<extra></extra>",
+            customdata=np.column_stack((lost_data['LOI'], lost_data['Completes']))
+        ))
+        
+        # Add trendlines
+        if len(won_data) >= 2:
+            # Won bids trendline
+            z = np.polyfit(won_data['IR'], won_data['CPI'], 1)
+            p = np.poly1d(z)
+            x_range = np.linspace(won_data['IR'].min(), won_data['IR'].max(), 100)
+            
+            fig.add_trace(go.Scatter(
+                x=x_range,
+                y=p(x_range),
+                mode='lines',
+                name='Won Trend',
+                line=dict(color=DARK_THEME_COLORS['won'], width=2, dash='dash'),
+                hoverinfo='skip'
+            ))
+        
+        if len(lost_data) >= 2:
+            # Lost bids trendline
+            z = np.polyfit(lost_data['IR'], lost_data['CPI'], 1)
+            p = np.poly1d(z)
+            x_range = np.linspace(lost_data['IR'].min(), lost_data['IR'].max(), 100)
+            
+            fig.add_trace(go.Scatter(
+                x=x_range,
+                y=p(x_range),
+                mode='lines',
+                name='Lost Trend',
+                line=dict(color=DARK_THEME_COLORS['lost'], width=2, dash='dash'),
+                hoverinfo='skip'
+            ))
+        
+        # Update layout
+        fig.update_layout(
+            title={
+                'text': 'CPI vs Incidence Rate (IR)',
+                'font': {'size': 20, 'color': 'white'},
+                'y': 0.95,
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            xaxis=dict(
+                title='Incidence Rate (%)',
+                gridcolor='rgba(255,255,255,0.1)',
+                zerolinecolor='rgba(255,255,255,0.1)',
+                ticksuffix='%',
+                titlefont=dict(color='white'),
+                tickfont=dict(color='white')
+            ),
+            yaxis=dict(
+                title='CPI ($)',
+                gridcolor='rgba(255,255,255,0.1)',
+                zerolinecolor='rgba(255,255,255,0.1)',
+                tickprefix='$',
+                titlefont=dict(color='white'),
+                tickfont=dict(color='white')
+            ),
+            legend=dict(
+                font=dict(color='white', size=12),
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='center',
+                x=0.5,
+                bgcolor='rgba(0,0,0,0.2)',
+                bordercolor='rgba(255,255,255,0.3)',
+                borderwidth=1
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white'),
+            margin=dict(l=50, r=40, t=80, b=50),
+            height=500,
+            annotations=[
+                dict(
+                    x=0.5, y=1.12,
+                    xref='paper', yref='paper',
+                    text='Lower IR generally results in higher CPI as qualifying respondents become harder to find',
+                    showarrow=False,
+                    font=dict(color='rgba(255,255,255,0.7)', size=12),
+                    bgcolor='rgba(0,0,0,0.3)',
+                    borderpad=4,
+                    borderwidth=1,
+                    bordercolor='rgba(255,255,255,0.3)',
+                    width=600,
+                    align='center'
+                )
+            ]
+        )
+        
+        return fig
+    
+    except Exception as e:
+        logger.error(f"Error creating CPI vs IR scatter plot: {e}", exc_info=True)
+        # Return a minimal figure if error occurs
+        fig = go.Figure()
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=500
+        )
+        return fig
+
+def create_cpi_efficiency_chart(won_data: pd.DataFrame, lost_data: pd.DataFrame) -> go.Figure:
+    """
+    Create a chart showing CPI versus a calculated efficiency metric.
+    
+    Args:
+        won_data (pd.DataFrame): DataFrame of Won bids
+        lost_data (pd.DataFrame): DataFrame of Lost bids
+        
+    Returns:
+        go.Figure: Plotly figure with efficiency visualization
+    """
+    try:
+        # Calculate efficiency metric (CPI per minute of LOI, adjusted by IR)
+        # Higher value means less efficient
+        won_data['Efficiency'] = won_data['CPI'] / (won_data['LOI'] * (won_data['IR'] / 100))
+        lost_data['Efficiency'] = lost_data['CPI'] / (lost_data['LOI'] * (lost_data['IR'] / 100))
+        
+        # Create figure
+        fig = go.Figure()
+        
+        # Add scatter plot for won bids with size based on Completes
+        fig.add_trace(go.Scatter(
+            x=won_data['LOI'],
+            y=won_data['Efficiency'],
+            mode='markers',
+            name='Won Bids',
+            marker=dict(
+                color=DARK_THEME_COLORS['won'],
+                size=won_data['Completes'] / won_data['Completes'].max() * 30 + 5,  # Scale the size
+                opacity=0.7,
+                line=dict(width=1, color='rgba(255,255,255,0.3)')
+            ),
+            hovertemplate="<b>Won Bid</b><br>LOI: %{x} min<br>Efficiency Score: %{y:.2f}<br>IR: %{customdata[0]}%<br>CPI: $%{customdata[1]:.2f}<br>Completes: %{customdata[2]}<extra></extra>",
+            customdata=np.column_stack((won_data['IR'], won_data['CPI'], won_data['Completes']))
+        ))
+        
+        # Add scatter plot for lost bids with size based on Completes
+        fig.add_trace(go.Scatter(
+            x=lost_data['LOI'],
+            y=lost_data['Efficiency'],
+            mode='markers',
+            name='Lost Bids',
+            marker=dict(
+                color=DARK_THEME_COLORS['lost'],
+                size=lost_data['Completes'] / lost_data['Completes'].max() * 30 + 5,  # Scale the size
+                opacity=0.7,
+                line=dict(width=1, color='rgba(255,255,255,0.3)')
+            ),
+            hovertemplate="<b>Lost Bid</b><br>LOI: %{x} min<br>Efficiency Score: %{y:.2f}<br>IR: %{customdata[0]}%<br>CPI: $%{customdata[1]:.2f}<br>Completes: %{customdata[2]}<extra></extra>",
+            customdata=np.column_stack((lost_data['IR'], lost_data['CPI'], lost_data['Completes']))
+        ))
+        
+        # Add horizontal line for average won efficiency
+        won_avg_efficiency = won_data['Efficiency'].mean()
+        
+        fig.add_shape(
+            type="line",
+            x0=0,
+            x1=1,
+            y0=won_avg_efficiency,
+            y1=won_avg_efficiency,
+            xref="paper",
+            line=dict(
+                color=DARK_THEME_COLORS['won'],
+                width=2,
+                dash="dash",
+            )
+        )
+        
+        # Add horizontal line for average lost efficiency
+        lost_avg_efficiency = lost_data['Efficiency'].mean()
+        
+        fig.add_shape(
+            type="line",
+            x0=0,
+            x1=1,
+            y0=lost_avg_efficiency,
+            y1=lost_avg_efficiency,
+            xref="paper",
+            line=dict(
+                color=DARK_THEME_COLORS['lost'],
+                width=2,
+                dash="dash",
+            )
+        )
+        
+        # Update layout
+        fig.update_layout(
+            title={
+                'text': 'Pricing Efficiency by Length of Interview (LOI)',
+                'font': {'size': 20, 'color': 'white'},
+                'y': 0.95,
+                'x': 0.5,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            },
+            xaxis=dict(
+                title='Length of Interview (minutes)',
+                gridcolor='rgba(255,255,255,0.1)',
+                zerolinecolor='rgba(255,255,255,0.1)',
+                titlefont=dict(color='white'),
+                tickfont=dict(color='white')
+            ),
+            yaxis=dict(
+                title='Efficiency Score (lower is better)',
+                gridcolor='rgba(255,255,255,0.1)',
+                zerolinecolor='rgba(255,255,255,0.1)',
+                titlefont=dict(color='white'),
+                tickfont=dict(color='white')
+            ),
+            legend=dict(
+                font=dict(color='white', size=12),
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='center',
+                x=0.5,
+                bgcolor='rgba(0,0,0,0.2)',
+                bordercolor='rgba(255,255,255,0.3)',
+                borderwidth=1
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white'),
+            margin=dict(l=50, r=40, t=100, b=50),
+            height=500,
+            annotations=[
+                dict(
+                    x=0.5, y=1.12,
+                    xref='paper', yref='paper',
+                    text='Bubble size represents sample size (number of completes)',
+                    showarrow=False,
+                    font=dict(color='rgba(255,255,255,0.7)', size=12),
+                    bgcolor='rgba(0,0,0,0.3)',
+                    borderpad=4,
+                    borderwidth=1,
+                    bordercolor='rgba(255,255,255,0.3)',
+                    width=600,
+                    align='center'
+                ),
+                dict(
+                    x=1, y=won_avg_efficiency,
+                    xref='paper', yref='y',
+                    text=f"Won Avg: {won_avg_efficiency:.2f}",
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowsize=1,
+                    arrowwidth=2,
+                    arrowcolor=DARK_THEME_COLORS['won'],
+                    ax=50, ay=0,
+                    font=dict(color=DARK_THEME_COLORS['won'], size=12),
+                    bgcolor='rgba(0,0,0,0.5)',
+                    borderpad=4
+                ),
+                dict(
+                    x=1, y=lost_avg_efficiency,
+                    xref='paper', yref='y',
+                    text=f"Lost Avg: {lost_avg_efficiency:.2f}",
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowsize=1,
+                    arrowwidth=2,
+                    arrowcolor=DARK_THEME_COLORS['lost'],
+                    ax=50, ay=0,
+                    font=dict(color=DARK_THEME_COLORS['lost'], size=12),
+                    bgcolor='rgba(0,0,0,0.5)',
+                    borderpad=4
+                )
+            ]
+        )
+        
+        return fig
+    
+    except Exception as e:
+        logger.error(f"Error creating CPI efficiency chart: {e}", exc_info=True)
+        # Return a minimal figure if error occurs
+        fig = go.Figure()
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=500
+        )
+        return fig
+
 def create_cpi_comparison_chart(won_data: pd.DataFrame, lost_data: pd.DataFrame) -> go.Figure:
     """
     Create an enhanced CPI comparison chart between won and lost bids with improved readability
