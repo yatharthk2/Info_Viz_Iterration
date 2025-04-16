@@ -142,7 +142,7 @@ def plot_learning_curve(model: Any, X: pd.DataFrame, y: pd.Series, cv: int = 5) 
         ]),
         fill='toself',
         line=dict(color='rgba(0,0,0,0)'),
-        fillcolor=f'rgba{tuple(int(COLOR_SYSTEM["ACCENT"]["BLUE"][i:i+2], 16) for i in (1, 3, 5)) + (0.2,)}',
+        fillcolor='rgba(78, 121, 167, 0.2)',
         showlegend=False,
         hoverinfo='skip'
     ))
@@ -167,7 +167,7 @@ def plot_learning_curve(model: Any, X: pd.DataFrame, y: pd.Series, cv: int = 5) 
         ]),
         fill='toself',
         line=dict(color='rgba(0,0,0,0)'),
-        fillcolor=f'rgba{tuple(int(COLOR_SYSTEM["ACCENT"]["ORANGE"][i:i+2], 16) for i in (1, 3, 5)) + (0.2,)}',
+        fillcolor='rgba(242, 142, 43, 0.2)',
         showlegend=False,
         hoverinfo='skip'
     ))
@@ -396,7 +396,7 @@ def create_feature_dependence_plot(model: Any, X: pd.DataFrame, feature_name: st
     
     # Scale the histogram to fit nicely on the chart
     y_range = max(predictions) - min(predictions)
-    scale_factor = y_range * 0.2 / max(feature_counts)
+    scale_factor = y_range * 0.2 / max(feature_counts) if max(feature_counts) > 0 else 0
     scaled_counts = feature_counts * scale_factor + min(predictions)
     
     fig.add_trace(go.Bar(
@@ -485,27 +485,28 @@ def create_model_comparison_chart(model_scores: Dict[str, Dict[str, float]]) -> 
             normalized = values
             display_metric = metric
         
+        # Create text values for display
+        text_values = [f"{values[j]:.4f}" for j in range(len(values))]
+        
+        # Add bar trace
         fig.add_trace(go.Bar(
             x=models,
             y=normalized,
             name=display_metric,
-            text=[f"{values[i]:.4f}" for i in range(len(values))],
-            textposition="auto",
+            text=text_values,
+            textposition='auto',
             marker_color=COLOR_SYSTEM['CHARTS'][f'SERIES{i+1}'],
-            hovertemplate=(
-                "Model: %{x}<br>" +
-                f"{metric}: " + "%{text}<br>" +
-                "<extra></extra>"
-            )
+            hovertemplate="Model: %{x}<br>" + f"{metric}: " + "%{text}<br><extra></extra>"
         ))
     
     # Format chart
-    fig = format_chart_for_dark_mode(fig, "Model Performance Comparison")
+    fig = format_chart_for_dark_mode(fig, "Model Comparison")
     
     fig.update_layout(
-        xaxis_title="Model",
-        yaxis_title="Performance Score",
         barmode='group',
+        xaxis_title="Model",
+        yaxis_title="Score (normalized)",
+        hovermode="closest",
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -514,28 +515,5 @@ def create_model_comparison_chart(model_scores: Dict[str, Dict[str, float]]) -> 
             x=1
         )
     )
-    
-    # Identify best model
-    best_model = None
-    best_score = -float('inf')
-    
-    for model, scores in model_scores.items():
-        if scores.get('R²', 0) > best_score:
-            best_score = scores.get('R²', 0)
-            best_model = model
-    
-    if best_model:
-        fig.add_annotation(
-            xref="paper", yref="paper",
-            x=0.5, y=1.05,
-            text=f"Best Model: {best_model} (R² = {best_score:.4f})",
-            showarrow=False,
-            font=dict(size=14, color=COLOR_SYSTEM['PRIMARY']['CONTRAST']),
-            bgcolor=COLOR_SYSTEM['SEMANTIC']['SUCCESS'],
-            bordercolor=COLOR_SYSTEM['NEUTRAL']['DARK'],
-            borderwidth=1,
-            borderpad=4,
-            align="center"
-        )
     
     return fig
