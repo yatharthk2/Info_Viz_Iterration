@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 import logging
 
 # Configure logging

@@ -1,146 +1,309 @@
 """
 Theme utilities for the CPI Analysis & Prediction Dashboard.
-Provides custom styling and theming functionality.
+Provides functions for applying custom themes and styling.
 """
 
 import streamlit as st
-from typing import Dict, List, Any
+import pandas as pd
+import numpy as np
+import logging
+from typing import Dict, Any
 
-def apply_custom_theme():
-    """
-    Apply custom styling to the dashboard using CSS.
-    """
-    # Custom CSS for high-contrast dark theme enhancements
-    custom_css = """
-    <style>
-    /* Improve text contrast */
-    .stTextInput > label, .stSelectbox > label, .stSlider > label {
-        color: #ffffff !important;
-        font-weight: 500 !important;
-    }
-    
-    /* Enhance header contrast */
-    h1, h2, h3, h4 {
-        color: #ffffff !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Make metrics more visible */
-    [data-testid="stMetricValue"] {
-        font-size: 2rem !important;
-        font-weight: 800 !important;
-        color: #ffffff !important;
-    }
-    
-    /* Enhance metric delta styling */
-    [data-testid="stMetricDelta"] {
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Improve button contrast */
-    .stButton button {
-        font-weight: 600 !important;
-        border-radius: 4px !important;
-    }
-    
-    /* Emphasize expandable sections */
-    .streamlit-expanderHeader {
-        font-weight: 600 !important;
-        color: #ffffff !important;
-    }
-    
-    /* Card-like effect for better section delineation */
-    .element-container:has(.block-container) {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
-    
-    /* Enhanced tooltip for better readability */
-    .tooltip-content {
-        background-color: #222a36 !important;
-        border: 1px solid #4e79a7 !important;
-        color: #ffffff !important;
-        font-weight: 500 !important;
-    }
-    
-    /* Make sure table headers are more visible */
-    .dataframe th {
-        background-color: #4e79a7 !important;
-        color: white !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Table row styling for better readability */
-    .dataframe tr:nth-child(even) {
-        background-color: #1e2130 !important;
-    }
-    
-    /* Better sidebar styling */
-    [data-testid="stSidebar"] {
-        background-color: #0e1117 !important;
-        border-right: 1px solid #2c313d !important;
-    }
-    
-    /* Enhanced sidebar header */
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h1 {
-        padding-top: 1rem !important;
-        color: #ffffff !important;
-        font-weight: 800 !important;
-    }
-    
-    /* Warning/error message styling */
-    .stAlert {
-        border-radius: 4px !important;
-        border-width: 2px !important;
-    }
-    
-    /* Give more emphasis to metric cards */
-    div[data-testid="metric-container"] {
-        background-color: #1e2130;
-        border: 1px solid #2c313d;
-        border-radius: 5px;
-        padding: 10px !important;
-        margin-bottom: 10px !important;
-    }
-    </style>
-    """
-    
-    # Apply the custom CSS
-    st.markdown(custom_css, unsafe_allow_html=True)
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-def highlight_text(text: str, style: str = "info") -> str:
+# Dark theme colors
+DARK_THEME_COLORS = {
+    "background": "#111111",
+    "secondary_background": "#1E2130",
+    "primary": "#4e79a7",
+    "success": "#52BC9F",
+    "warning": "#F6C85F",
+    "error": "#E15759",
+    "text": "#FFFFFF",
+    "secondary_text": "#BBBBBB",
+    "highlight": "#7EB3FF",
+    "muted": "#555555",
+    "borders": "#333333",
+}
+
+def apply_custom_theme() -> None:
     """
-    Create styled highlighted text for better visual cues.
+    Apply a custom theme to the Streamlit application with high-contrast colors for better readability.
+    The theme is optimized for data visualization with dark backgrounds.
+    """
+    try:
+        # Add custom CSS
+        st.markdown("""
+        <style>
+        /* Base text styling */
+        html, body, [class*="css"] {
+            font-family: 'Source Sans Pro', sans-serif;
+            color: #FAFAFA;
+        }
+        
+        /* Sidebar styling */
+        .css-1d391kg, .css-12oz5g7 {
+            background-color: #1E2130;
+        }
+        
+        /* Headers */
+        h1, h2, h3, h4, h5 {
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
+        h1 {
+            font-size: 2.2em !important;
+            margin-bottom: 0.5em !important;
+            border-bottom: 2px solid #4e79a7;
+            padding-bottom: 0.3em;
+        }
+        h2 {
+            font-size: 1.8em !important;
+            margin-top: 1em !important;
+        }
+        h3 {
+            font-size: 1.4em !important;
+            margin-top: 1em !important;
+            color: #7EB3FF !important;
+        }
+        
+        /* Statistics */
+        .metric-value {
+            font-size: 2.5em !important;
+            font-weight: bold !important;
+            color: #FFFFFF !important;
+        }
+        .metric-label {
+            font-size: 1em !important;
+            color: #BBBBBB !important;
+        }
+        
+        /* Enhance container backgrounds */
+        div.stBlock {
+            background-color: #1E2130;
+            padding: 1em;
+            border-radius: 5px;
+        }
+        
+        /* Better button styling */
+        .stButton>button {
+            background-color: #4e79a7 !important;
+            color: white !important;
+            border: none !important;
+            font-weight: 600 !important;
+            padding: 0.5em 1em !important;
+            border-radius: 4px !important;
+            transition: all 0.3s ease !important;
+        }
+        .stButton>button:hover {
+            background-color: #3A5980 !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+        }
+        .stButton>button:active {
+            transform: translateY(1px) !important;
+        }
+        
+        /* Slider styling for better visibility */
+        .stSlider {
+            padding-top: 0.5em;
+            padding-bottom: 1em;
+        }
+        .stSlider > div > div {
+            background-color: rgba(78, 121, 167, 0.3) !important;
+        }
+        .stSlider > div > div > div > div {
+            background-color: #4e79a7 !important;
+        }
+        
+        /* Table styling */
+        .dataframe {
+            border: 1px solid #333333 !important;
+        }
+        .dataframe th {
+            background-color: #1E2130 !important;
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+            border: 1px solid #333333 !important;
+        }
+        .dataframe td {
+            background-color: #111111 !important;
+            color: #DDDDDD !important;
+            border: 1px solid #333333 !important;
+        }
+        
+        /* Expander styling */
+        .streamlit-expanderHeader {
+            background-color: rgba(78, 121, 167, 0.1) !important;
+            border-radius: 4px !important;
+        }
+        .streamlit-expanderHeader:hover {
+            background-color: rgba(78, 121, 167, 0.2) !important;
+        }
+        
+        /* Radio button styling */
+        .stRadio > div {
+            background-color: #1E2130 !important;
+            border-radius: 4px !important;
+            padding: 0.5em !important;
+        }
+        
+        /* Custom class for dark cards */
+        .dark-card {
+            background-color: #1E2130;
+            border-radius: 5px;
+            padding: 1.5em;
+            margin-bottom: 1em;
+            border-left: 4px solid #4e79a7;
+        }
+        
+        /* Custom class for metric containers */
+        .metric-container {
+            background-color: rgba(30, 33, 48, 0.7);
+            border-radius: 5px;
+            padding: 1em;
+            text-align: center;
+            border-bottom: 3px solid #4e79a7;
+        }
+        
+        /* Better select box styling */
+        .stSelectbox > div > div {
+            background-color: #1E2130 !important;
+            color: #FFFFFF !important;
+        }
+        
+        /* Tab styling */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 2px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: #1E2130 !important;
+            color: #BBBBBB !important;
+            padding: 10px 20px;
+            border-radius: 4px 4px 0 0;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #4e79a7 !important;
+            color: #FFFFFF !important;
+        }
+        
+        /* Tooltip styling */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #BBBBBB;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #1E2130;
+            color: #FFFFFF;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Chart area modifications */
+        .js-plotly-plot {
+            background-color: transparent !important;
+        }
+        
+        /* Focus indicators for accessibility */
+        a:focus, button:focus, input:focus, select:focus, textarea:focus {
+            outline: 2px solid #7EB3FF !important;
+            outline-offset: 2px !important;
+        }
+        
+        /* Better horizontal rule styling */
+        hr {
+            border-top: 1px solid #333333 !important;
+            margin: 1.5em 0 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        logger.info("Applied custom dark high-contrast theme")
+    
+    except Exception as e:
+        logger.error(f"Error applying custom theme: {e}", exc_info=True)
+
+def create_metric_card(title: str, value: Any, unit: str = "", delta: float = None, 
+                     interpret: str = None, help_text: str = None) -> None:
+    """
+    Create a styled metric card for displaying important KPIs.
     
     Args:
-        text (str): Text to highlight
-        style (str): Style to apply (info, success, warning, danger)
+        title (str): Metric title
+        value (Any): Metric value
+        unit (str, optional): Unit of measure (e.g., "$", "%"). Defaults to "".
+        delta (float, optional): Change value for delta indicator. Defaults to None.
+        interpret (str, optional): Interpretation text. Defaults to None.
+        help_text (str, optional): Help text for tooltip. Defaults to None.
+    """
+    st.markdown(f"""
+    <div class="metric-container">
+        <div style="font-size:0.9em; color:#BBBBBB; margin-bottom:0.3em;">{title}</div>
+        <div style="font-size:2em; font-weight:bold; color:#FFFFFF;">{value}{unit}</div>
         
-    Returns:
-        str: HTML for styled text
-    """
-    styles = {
-        "info": "background-color: #4e79a7; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: bold;",
-        "success": "background-color: #59a14f; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: bold;",
-        "warning": "background-color: #edc949; color: black; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: bold;",
-        "danger": "background-color: #e15759; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: bold;"
-    }
+        {f'<div style="margin-top:0.3em; color:{"#52BC9F" if delta > 0 else "#E15759"};"><span>{"▲" if delta > 0 else "▼"}</span> {abs(delta)}{unit}</div>' if delta is not None else ''}
+        
+        {f'<div style="font-size:0.8em; color:#BBBBBB; margin-top:0.5em;">{interpret}</div>' if interpret else ''}
+    </div>
+    """, unsafe_allow_html=True)
     
-    return f'<span style="{styles.get(style, styles["info"])}">{text}</span>'
+    if help_text:
+        st.caption(help_text)
 
-def format_metric_value(value: float, prefix: str = "", suffix: str = "", decimal_places: int = 2) -> str:
+def create_section_header(title: str, description: str = None, icon: str = None) -> None:
     """
-    Format a value for display as a metric.
+    Create a styled section header with optional description and icon.
     
     Args:
-        value (float): The value to format
-        prefix (str): Prefix such as "$" or "€"
-        suffix (str): Suffix such as "%" or " min"
-        decimal_places (int): Number of decimal places
-        
-    Returns:
-        str: Formatted metric value
+        title (str): Section title
+        description (str, optional): Section description. Defaults to None.
+        icon (str, optional): Icon character (emoji). Defaults to None.
     """
-    format_str = f"{prefix}{{:.{decimal_places}f}}{suffix}"
-    return format_str.format(value)
+    if icon:
+        title = f"{icon} {title}"
+    
+    st.markdown(f"""
+    <div style="border-bottom: 2px solid #4e79a7; margin-bottom: 1em; padding-bottom: 0.5em;">
+        <h2 style="margin-bottom: 0.2em;">{title}</h2>
+        {f'<p style="color: #BBBBBB;">{description}</p>' if description else ''}
+    </div>
+    """, unsafe_allow_html=True)
+
+def format_value(value: float, format_type: str = 'currency', precision: int = 2) -> str:
+    """
+    Format a numeric value with the appropriate formatting based on type.
+    
+    Args:
+        value (float): Value to format
+        format_type (str, optional): Format type ('currency', 'percent', 'number'). Defaults to 'currency'.
+        precision (int, optional): Decimal precision. Defaults to 2.
+    
+    Returns:
+        str: Formatted value as a string
+    """
+    try:
+        if format_type == 'currency':
+            return f"${value:,.{precision}f}"
+        elif format_type == 'percent':
+            return f"{value:.{precision}f}%"
+        else:  # 'number'
+            return f"{value:,.{precision}f}"
+    except Exception as e:
+        logger.error(f"Error formatting value: {e}")
+        return str(value)  # Fallback to string conversion

@@ -13,14 +13,14 @@ from typing import Dict, List, Tuple, Any, Optional
 
 # Import visualization utilities
 from utils.visualization import (
-    create_type_distribution_chart,
-    create_cpi_distribution_boxplot,
-    create_cpi_vs_ir_scatter,
-    create_cpi_efficiency_chart
+    create_cpi_comparison_chart,
+    create_feature_importance_chart,
+    create_prediction_comparison_chart,
+    create_heatmap
 )
 
 # Import theme utilities
-from utils.theme import highlight_text, format_metric_value
+from utils.theme import create_section_header, format_value
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

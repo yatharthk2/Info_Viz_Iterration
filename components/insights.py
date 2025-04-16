@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 from typing import Dict, List, Tuple, Any, Optional
 
 # Import visualization utilities
-from utils.visualization import format_chart_for_dark_mode, DARK_THEME_COLORS
+from utils.visualization import DARK_THEME_COLORS, set_plotly_theme, format_chart_for_dark_mode
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
