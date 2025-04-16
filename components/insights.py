@@ -381,10 +381,12 @@ def show_insights(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
                     
                     # Add arrows to highlight rate of change differences
                     if abs(lost_slope - won_slope) > 1:  # Only add for significant differences
-                        mid_x = (i + (i-1)) / 2  # x-position between points
+                        # Use actual bin names instead of index positions
+                        # This avoids the non-integer indexing error
+                        mid_bin = loi_comparison['LOI_Bin'].iloc[i]
                         
                         fig.add_annotation(
-                            x=loi_comparison['LOI_Bin'].iloc[mid_x],
+                            x=mid_bin,
                             y=(loi_comparison['CPI_Lost'].iloc[i] + loi_comparison['CPI_Lost'].iloc[i-1]) / 2,
                             text="Steeper increase for lost bids" if lost_slope > won_slope else "Similar rates",
                             showarrow=True,
