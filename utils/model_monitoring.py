@@ -250,7 +250,7 @@ def create_metrics_trend_chart(metrics_df: pd.DataFrame, metric_names: Optional[
             x=0.5, y=0.5,
             xref="paper", yref="paper",
             showarrow=False,
-            font=dict(size=16, color=COLOR_SYSTEM['TEXT']['PRIMARY'])
+            font=dict(size=16, color=COLOR_SYSTEM['PRIMARY']['CONTRAST'])
         )
         return format_chart_for_dark_mode(fig, "Model Metrics Trends", height=400)
     
@@ -267,7 +267,7 @@ def create_metrics_trend_chart(metrics_df: pd.DataFrame, metric_names: Optional[
             x=0.5, y=0.5,
             xref="paper", yref="paper",
             showarrow=False,
-            font=dict(size=16, color=COLOR_SYSTEM['TEXT']['PRIMARY'])
+            font=dict(size=16, color=COLOR_SYSTEM['PRIMARY']['CONTRAST'])
         )
         return format_chart_for_dark_mode(fig, "Model Metrics Trends", height=400)
     
@@ -333,7 +333,7 @@ def create_drift_alerts_table(alerts_df: pd.DataFrame) -> go.Figure:
             x=0.5, y=0.5,
             xref="paper", yref="paper",
             showarrow=False,
-            font=dict(size=16, color=COLOR_SYSTEM['TEXT']['PRIMARY'])
+            font=dict(size=16, color=COLOR_SYSTEM['PRIMARY']['CONTRAST'])
         )
         return format_chart_for_dark_mode(fig, "Model Drift Alerts", height=300)
     
@@ -346,7 +346,7 @@ def create_drift_alerts_table(alerts_df: pd.DataFrame) -> go.Figure:
             values=["Date", "Metric", "Previous", "Current", "Change"],
             fill_color=COLOR_SYSTEM['BACKGROUND']['SECONDARY'],
             align="left",
-            font=dict(color=COLOR_SYSTEM['TEXT']['PRIMARY'], size=14)
+            font=dict(color=COLOR_SYSTEM['PRIMARY']['CONTRAST'], size=14)
         ),
         cells=dict(
             values=[
@@ -358,7 +358,7 @@ def create_drift_alerts_table(alerts_df: pd.DataFrame) -> go.Figure:
             ],
             fill_color=COLOR_SYSTEM['BACKGROUND']['PRIMARY'],
             align="left",
-            font=dict(color=COLOR_SYSTEM['TEXT']['PRIMARY'], size=12),
+            font=dict(color=COLOR_SYSTEM['PRIMARY']['CONTRAST'], size=12),
             height=30
         )
     )])
