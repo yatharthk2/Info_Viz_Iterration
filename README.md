@@ -8,6 +8,7 @@ A sophisticated Streamlit dashboard for predictive pricing analysis in market re
 - **Predictive Pricing**: Machine learning models that predict optimal CPI based on project specifications
 - **Strategic Insights**: Data-driven recommendations for pricing strategy optimization
 - **Data Quality Analysis**: Comprehensive tools for data validation and outlier detection
+- **Advanced Model Metrics**: Learning curves, residual analysis, and feature importance for model explainability
 - **Model Monitoring**: Track prediction accuracy and detect model drift over time
 - **Quick Insights**: Generate emoji-powered summaries of key data trends instantly
 
@@ -16,6 +17,9 @@ A sophisticated Streamlit dashboard for predictive pricing analysis in market re
 - **Overview**: High-level summary of key metrics and CPI comparison between won and lost bids
 - **Detailed Analysis**: In-depth analysis of how IR, LOI, and sample size affect CPI
 - **CPI Prediction**: Interactive tool for predicting optimal CPI for new bids
+  - **Advanced Model Metrics**: Learning curves, residuals analysis, and feature dependence plots to explain model behavior
+  - **Model Diagnostics**: Tools to detect overfitting/underfitting and evaluate model reliability
+  - **Feature Importance Analysis**: Visual explanation of which factors most influence CPI predictions
 - **Insights & Recommendations**: Strategic recommendations based on data analysis
 - **Model Monitoring**: Track model performance metrics over time
 

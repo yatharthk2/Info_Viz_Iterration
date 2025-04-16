@@ -231,7 +231,7 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                                     x=[f"{metric} (Train)", f"{metric} (Test)"],
                                     y=[train_val, test_val],
                                     name=metric,
-                                    marker_color=COLOR_SYSTEM['CHARTS'][f'SERIES{i+1}'],
+                                    marker_color=COLOR_SYSTEM['CHARTS'][f'SERIES{i+1}' if i < 7 else 'SERIES1'],
                                 ))
                             
                             fig = format_chart_for_dark_mode(fig, "Train vs Test Metrics", height=200)
