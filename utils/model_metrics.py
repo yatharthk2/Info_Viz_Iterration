@@ -293,12 +293,28 @@ def create_residuals_plot(model: Any, X: pd.DataFrame, y: pd.Series) -> go.Figur
     iqr = q3 - q1
     outlier_threshold = 1.5 * iqr
     
-    # Highlight outliers
-    outlier_indices = np.where((residuals > q3 + outlier_threshold) | (residuals < q1 - outlier_threshold))[0]
-    if len(outlier_indices) > 0:
+    # Safely identify outliers
+    outlier_mask = (residuals > q3 + outlier_threshold) | (residuals < q1 - outlier_threshold)
+    outlier_x = []
+    outlier_y = []
+    
+    # Convert Series to numpy arrays for safe indexing
+    if isinstance(residuals, pd.Series):
+        for i, is_outlier in enumerate(outlier_mask):
+            if is_outlier:
+                outlier_x.append(y_pred.iloc[i] if isinstance(y_pred, pd.Series) else y_pred[i])
+                outlier_y.append(residuals.iloc[i])
+    else:
+        # Handle NumPy arrays
+        outlier_indices = np.where(outlier_mask)[0]
+        outlier_x = y_pred[outlier_indices].tolist() if len(outlier_indices) > 0 else []
+        outlier_y = residuals[outlier_indices].tolist() if len(outlier_indices) > 0 else []
+    
+    # Add outliers trace if any were found
+    if len(outlier_x) > 0:
         fig.add_trace(go.Scatter(
-            x=y_pred[outlier_indices],
-            y=residuals[outlier_indices],
+            x=outlier_x,
+            y=outlier_y,
             mode='markers',
             marker=dict(
                 size=12,
