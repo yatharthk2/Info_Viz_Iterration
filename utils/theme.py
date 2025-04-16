@@ -62,7 +62,15 @@ COLOR_SYSTEM = {
         'LOST_TRANS': 'rgba(242, 142, 43, 0.7)',
         'GRADIENT_1': '#3A5980',
         'GRADIENT_2': '#7EB3FF',
-        'GRADIENT_3': '#FFFFFF'
+        'GRADIENT_3': '#FFFFFF',
+        # Series colors for charts (consistent color scheme)
+        'SERIES1': '#4E79A7',    # Blue
+        'SERIES2': '#F28E2B',    # Orange
+        'SERIES3': '#E15759',    # Red
+        'SERIES4': '#76B7B2',    # Teal
+        'SERIES5': '#59A14F',    # Green
+        'SERIES6': '#EDC948',    # Yellow
+        'SERIES7': '#B07AA1'     # Purple
     }
 }
 
