@@ -899,31 +899,40 @@ def show_insights(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
         # Combined factor pricing model recommendation
         st.subheader("4. Combined Factor Pricing Model")
         
+        # Using the CPI Prediction Model section with side-by-side columns instead of flex layout
         st.markdown("""
         <div style="background-color:rgba(78, 121, 167, 0.2); padding:20px; border-radius:5px; margin-top:20px;">
             <h4 style="margin-top:0;">Using the CPI Prediction Model</h4>
             <p>For the most accurate pricing, use the machine learning prediction model from the CPI Prediction section. It accounts for complex interactions between factors that simple rules can't capture.</p>
-            
-            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-                <div style="background-color:rgba(30, 33, 48, 0.7); padding:15px; border-radius:5px; flex: 1; margin-right: 10px;">
-                    <h5 style="margin-top:0; color:#f28e2b;">When to Use the ML Model</h5>
-                    <ul>
-                        <li>High-stakes projects where optimal pricing is critical</li>
-                        <li>Projects with unusual combinations of IR, LOI, and sample size</li>
-                        <li>When you need to maximize win probability for strategic clients</li>
-                    </ul>
-                </div>
-                <div style="background-color:rgba(30, 33, 48, 0.7); padding:15px; border-radius:5px; flex: 1; margin-left: 10px;">
-                    <h5 style="margin-top:0; color:#f28e2b;">Model Advantages</h5>
-                    <ul>
-                        <li>Considers complex interaction effects between all parameters</li>
-                        <li>Adapts to your specific winning bid patterns</li>
-                        <li>Provides probability estimates and confidence intervals</li>
-                    </ul>
-                </div>
-            </div>
         </div>
         """, unsafe_allow_html=True)
+        
+        # Use streamlit columns for better layout control
+        model_col1, model_col2 = st.columns(2)
+        
+        with model_col1:
+            st.markdown("""
+            <div style="background-color:rgba(30, 33, 48, 0.7); padding:15px; border-radius:5px; height:100%;">
+                <h5 style="margin-top:0; color:#f28e2b;">When to Use the ML Model</h5>
+                <ul>
+                    <li>High-stakes projects where optimal pricing is critical</li>
+                    <li>Projects with unusual combinations of IR, LOI, and sample size</li>
+                    <li>When you need to maximize win probability for strategic clients</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with model_col2:
+            st.markdown("""
+            <div style="background-color:rgba(30, 33, 48, 0.7); padding:15px; border-radius:5px; height:100%;">
+                <h5 style="margin-top:0; color:#f28e2b;">Model Advantages</h5>
+                <ul>
+                    <li>Considers complex interaction effects between all parameters</li>
+                    <li>Adapts to your specific winning bid patterns</li>
+                    <li>Provides probability estimates and confidence intervals</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Implementation guide with enhanced styling
         st.header("Implementation Guide")

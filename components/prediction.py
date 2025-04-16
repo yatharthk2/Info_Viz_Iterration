@@ -226,24 +226,77 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
             # Create 3 columns for inputs
             col1, col2, col3 = st.columns(3)
             
-            # Calculate min, max, and default values from data with safeguards to prevent equal min/max
-            ir_min = max(1, int(combined_data_engineered['IR'].min()))
-            ir_max = min(100, int(combined_data_engineered['IR'].max()))
-            if ir_min >= ir_max:  # Ensure min is less than max
-                ir_min = max(1, ir_max - 10)
-            ir_default = int((ir_min + ir_max) / 2)
+            # Calculate min, max, and default values from data with more robust safeguards to prevent equal min/max
+            try:
+                # Print debugging information
+                logger.info(f"IR min raw: {combined_data_engineered['IR'].min()}, IR max raw: {combined_data_engineered['IR'].max()}")
+                logger.info(f"LOI min raw: {combined_data_engineered['LOI'].min()}, LOI max raw: {combined_data_engineered['LOI'].max()}")
+                logger.info(f"Completes min raw: {combined_data_engineered['Completes'].min()}, Completes max raw: {combined_data_engineered['Completes'].max()}")
+                
+                # Incidence Rate (IR) slider
+                ir_min = max(1, int(combined_data_engineered['IR'].min()))
+                ir_max = min(100, int(combined_data_engineered['IR'].max()))
+                # Force min/max to be different
+                if ir_min >= ir_max:
+                    if ir_max > 11:  # If we can safely subtract
+                        ir_min = ir_max - 10
+                    else:
+                        ir_min = 1
+                        ir_max = 20  # Force a sensible range
+                ir_default = int((ir_min + ir_max) / 2)
+                
+                # Length of Interview (LOI) slider
+                loi_min = max(1, int(combined_data_engineered['LOI'].min()))
+                loi_max = min(60, int(combined_data_engineered['LOI'].max() * 1.2))  # Add some buffer
+                # Force min/max to be different
+                if loi_min >= loi_max:
+                    if loi_max > 6:  # If we can safely subtract
+                        loi_min = loi_max - 5
+                    else:
+                        loi_min = 1
+                        loi_max = 15  # Force a sensible range
+                loi_default = int((loi_min + loi_max) / 2)
+                
+                # Completes slider
+                completes_min = max(10, int(combined_data_engineered['Completes'].min()))
+                completes_max = min(2000, int(combined_data_engineered['Completes'].max() * 1.2))  # Add some buffer
+                # Force min/max to be different
+                if completes_min >= completes_max:
+                    if completes_max > 110:  # If we can safely subtract
+                        completes_min = completes_max - 100
+                    else:
+                        completes_min = 10
+                        completes_max = 500  # Force a sensible range
+                completes_default = int((completes_min + completes_max) / 2)
+                
+                # Final safety check - use hardcoded values if any slider still has equal min/max
+                if ir_min >= ir_max:
+                    logger.warning(f"IR slider values still equal after fix: min={ir_min}, max={ir_max}")
+                    ir_min = 1
+                    ir_max = 50
+                    ir_default = 25
+                
+                if loi_min >= loi_max:
+                    logger.warning(f"LOI slider values still equal after fix: min={loi_min}, max={loi_max}")
+                    loi_min = 5
+                    loi_max = 30
+                    loi_default = 15
+                
+                if completes_min >= completes_max:
+                    logger.warning(f"Completes slider values still equal after fix: min={completes_min}, max={completes_max}")
+                    completes_min = 50
+                    completes_max = 500
+                    completes_default = 200
+                
+                # Log final values
+                logger.info(f"Final slider values - IR: {ir_min}-{ir_max}, LOI: {loi_min}-{loi_max}, Completes: {completes_min}-{completes_max}")
             
-            loi_min = max(1, int(combined_data_engineered['LOI'].min()))
-            loi_max = min(60, int(combined_data_engineered['LOI'].max() * 1.2))  # Add some buffer
-            if loi_min >= loi_max:  # Ensure min is less than max
-                loi_min = max(1, loi_max - 5)
-            loi_default = int((loi_min + loi_max) / 2)
-            
-            completes_min = max(10, int(combined_data_engineered['Completes'].min()))
-            completes_max = min(2000, int(combined_data_engineered['Completes'].max() * 1.2))  # Add some buffer
-            if completes_min >= completes_max:  # Ensure min is less than max
-                completes_min = max(10, completes_max - 100)
-            completes_default = int((completes_min + completes_max) / 2)
+            except Exception as e:
+                # Fallback to hardcoded ranges if calculation fails
+                logger.error(f"Error calculating slider ranges: {e}")
+                ir_min, ir_max, ir_default = 1, 50, 25
+                loi_min, loi_max, loi_default = 5, 30, 15
+                completes_min, completes_max, completes_default = 50, 500, 200
             
             with col1:
                 ir = st.slider(
