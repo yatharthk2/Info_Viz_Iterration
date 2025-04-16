@@ -415,17 +415,17 @@ def show_insights(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
             </div>
             """, unsafe_allow_html=True)
             
-            # Add optimization recommendations
+            # Add optimization recommendations using Streamlit components
             st.markdown("""
             <div style="background-color:rgba(242, 142, 43, 0.2); padding:15px; border-radius:5px; margin-top:20px; border-left:5px solid #f28e2b;">
                 <h4 style="margin-top:0; color:#f28e2b;">LOI Optimization Recommendations</h4>
-                <ol>
-                    <li>Use a scaled LOI multiplier that increases at a lower rate than your competitors</li>
-                    <li>For surveys over 20 minutes, keep your CPI premium to no more than 30-40% above your 10-minute survey rate</li>
-                    <li>Consider offering tiered discounts specifically for longer interviews to differentiate from competitors</li>
-                </ol>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Use native Streamlit list
+            st.write("1. Use a scaled LOI multiplier that increases at a lower rate than your competitors")
+            st.write("2. For surveys over 20 minutes, keep your CPI premium to no more than 30-40% above your 10-minute survey rate")
+            st.write("3. Consider offering tiered discounts specifically for longer interviews to differentiate from competitors")
         
         with insights_tabs[3]:
             st.subheader("Sample Size (Completes) Effect Analysis")
@@ -938,39 +938,42 @@ def show_insights(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
         st.header("Implementation Guide")
         st.markdown("<hr style='margin-top: 0; background-color: #4e79a7; height: 2px'>", unsafe_allow_html=True)
         
-        # Create a step-by-step implementation process
-        st.markdown("""
-        <div style="background-color:rgba(30, 33, 48, 0.5); padding:20px; border-radius:5px; margin-top:20px;">
-            <h4 style="margin-top:0; color:white;">How to Implement These Recommendations</h4>
+        # Create a step-by-step implementation process using Streamlit components instead of HTML
+        with st.container():
+            st.markdown("""
+            <div style="background-color:rgba(30, 33, 48, 0.5); padding:20px; border-radius:5px; margin-top:20px;">
+                <h4 style="margin-top:0; color:white;">How to Implement These Recommendations</h4>
+            </div>
+            """, unsafe_allow_html=True)
             
-            <ol>
-                <li><strong>Start with baseline pricing tiers</strong> based on IR ranges</li>
-                <li><strong>Apply LOI multipliers</strong> based on survey length</li>
-                <li><strong>Apply volume discounts</strong> based on sample size</li>
-                <li><strong>Cross-check with the ML model</strong> for final validation</li>
-                <li><strong>Fine-tune based on client relationship and strategic value</strong> (±5-10%)</li>
-            </ol>
+            # Use native Streamlit numbered list instead of HTML
+            st.write("1. **Start with baseline pricing tiers** based on IR ranges")
+            st.write("2. **Apply LOI multipliers** based on survey length")
+            st.write("3. **Apply volume discounts** based on sample size")
+            st.write("4. **Cross-check with the ML model** for final validation")
+            st.write("5. **Fine-tune based on client relationship and strategic value** (±5-10%)")
             
-            <p style="margin-top:15px;">For critical bids, use the CPI Prediction tool to get the most precise pricing recommendation tailored to your specific project parameters.</p>
-        </div>
-        """, unsafe_allow_html=True)
+            st.info("For critical bids, use the CPI Prediction tool to get the most precise pricing recommendation tailored to your specific project parameters.")
         
         # Success metrics and follow-up
         st.subheader("Measuring Success")
         
-        st.markdown("""
-        <div style="background-color:rgba(82, 188, 163, 0.2); padding:15px; border-radius:5px; margin-top:10px;">
-            <h4 style="margin-top:0; color:#52bca3;">Key Performance Indicators</h4>
-            <p>Track these metrics to measure the effectiveness of your pricing strategy:</p>
-            <ol>
-                <li><strong>Win Rate</strong>: Should increase by 5-10% within 3 months of implementation</li>
-                <li><strong>Average Margin</strong>: Should remain stable or increase slightly</li>
-                <li><strong>Low IR Project Win Rate</strong>: This specific segment should show the most improvement</li>
-                <li><strong>Large Project Win Rate</strong>: Projects with 500+ completes should show improved conversion</li>
-            </ol>
-            <p style="font-style:italic; margin-top:10px;">Continuously update the prediction model with new data to ensure recommendations remain accurate over time.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        # Key Performance Indicators section using native Streamlit components
+        with st.container():
+            st.markdown("""
+            <div style="background-color:rgba(82, 188, 163, 0.2); padding:15px; border-radius:5px; margin-top:10px;">
+                <h4 style="margin-top:0; color:#52bca3;">Key Performance Indicators</h4>
+                <p>Track these metrics to measure the effectiveness of your pricing strategy:</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Use native Streamlit list
+            st.write("1. **Win Rate**: Should increase by 5-10% within 3 months of implementation")
+            st.write("2. **Average Margin**: Should remain stable or increase slightly")
+            st.write("3. **Low IR Project Win Rate**: This specific segment should show the most improvement")
+            st.write("4. **Large Project Win Rate**: Projects with 500+ completes should show improved conversion")
+            
+            st.caption("*Continuously update the prediction model with new data to ensure recommendations remain accurate over time.*")
         
         # Add footer with final advice
         st.markdown("""
