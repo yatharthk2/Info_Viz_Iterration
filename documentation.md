@@ -8,6 +8,12 @@
 5. [Component Modules](#component-modules)
 6. [Model Modules](#model-modules)
 7. [Configuration](#configuration)
+8. [Data Dictionary](#data-dictionary)
+9. [Feature Descriptions](#feature-descriptions)
+10. [Installation & Setup](#installation--setup)
+11. [Deployment Notes](#deployment-notes)
+12. [Maintenance & Troubleshooting](#maintenance--troubleshooting)
+13. [Future Enhancements](#future-enhancements)
 
 ## System Architecture
 
@@ -1433,3 +1439,281 @@ def train_models(X: pd.DataFrame, y: pd.Series) -> Dict[str, Any]:
 1. `utils/quick_insights.generate_quick_insights()` analyzes the data
 2. Key metrics and trends are extracted
 3. Insights are formatted with emojis and displayed
+
+## Data Dictionary
+
+This section describes the key data fields used in the CPI Analysis & Prediction Dashboard.
+
+### Primary Data Fields
+
+| Field Name | Description | Data Type | Source Table | Notes |
+|------------|-------------|-----------|--------------|-------|
+| **ID** | Unique identifier for a project/bid | String | Won/Lost | Primary key |
+| **Job_ID** | Identifier for invoiced jobs | String | Won | Only in won bids |
+| **Name** | Project name | String | Won/Lost | |
+| **IR** | Incidence Rate (%) | Float | Won/Lost | Percentage of respondents who qualify for the survey |
+| **LOI** | Length of Interview (minutes) | Float | Won/Lost | Average interview duration |
+| **Completes** | Number of completed interviews | Integer | Won/Lost | Sample size |
+| **CPI** | Cost Per Interview | Float | Won/Lost | Target variable for prediction |
+| **Country** | Country where the survey was conducted | String | Won/Lost | |
+| **Type** | Bid outcome (Won/Lost) | String | Derived | Added during processing |
+
+### Derived Fields
+
+| Field Name | Description | Formula | Usage |
+|------------|-------------|---------|-------|
+| **IR_Bin** | Categorized IR ranges | Based on percentile ranges | Used for analysis and visualization |
+| **LOI_Bin** | Categorized LOI ranges | Based on percentile ranges | Used for analysis and visualization |
+| **Completes_Bin** | Categorized sample size | Based on percentile ranges | Used for analysis and visualization |
+| **IR_LOI** | Interaction between IR and LOI | IR × LOI | Feature for modeling |
+| **CPI_per_minute** | CPI normalized by LOI | CPI ÷ LOI | Feature for modeling |
+| **Completes_Log** | Log-transformed sample size | log(1 + Completes) | Feature for modeling |
+| **Country_Group** | Grouped countries by region | Custom mapping | Used for analysis and modeling |
+| **IR_LOI_Segment** | Combined segment | IR_Bin + "_" + LOI_Bin | Used for segment analysis |
+
+## Feature Descriptions
+
+### Key Features and Their Impact on CPI
+
+#### Incidence Rate (IR)
+- **Definition**: The percentage of people who qualify for a survey out of the total number screened
+- **Business Impact**: Lower IR typically means more screening effort, thus higher costs
+- **Typical Range**: 5% to 70%
+- **Relationship with CPI**: Generally inverse relationship (lower IR → higher CPI)
+- **Statistical Significance**: Strong negative correlation with CPI (typically -0.3 to -0.6)
+- **Data Quality Considerations**: Occasionally reported as decimal (0.30) or percentage (30)
+
+#### Length of Interview (LOI)
+- **Definition**: Average time (in minutes) it takes to complete the survey
+- **Business Impact**: Longer interviews require more respondent compensation
+- **Typical Range**: 5 to 30 minutes
+- **Relationship with CPI**: Generally positive relationship (longer LOI → higher CPI)
+- **Statistical Significance**: Moderate positive correlation with CPI (typically 0.2 to 0.4)
+- **Data Quality Considerations**: Occasionally contains extreme outliers that need capping
+
+#### Sample Size (Completes)
+- **Definition**: Number of completed interviews required for the project
+- **Business Impact**: Larger samples may benefit from economies of scale
+- **Typical Range**: 100 to 1,500 completes
+- **Relationship with CPI**: Often shows a slight negative relationship (economies of scale)
+- **Statistical Significance**: Weak negative correlation with CPI (typically -0.1 to -0.2)
+- **Data Quality Considerations**: Highly skewed distribution with occasional very large values
+
+#### Country/Geography
+- **Definition**: Country or region where the survey is conducted
+- **Business Impact**: Different regions have different cost structures and respondent availability
+- **Relationship with CPI**: Significant variations by region (North America typically higher)
+- **Statistical Significance**: Strong categorical predictor in models
+- **Data Quality Considerations**: Standardized into regional groups for more reliable analysis
+
+## Installation & Setup
+
+### Prerequisites
+- Python 3.9+ (3.11 recommended)
+- Pip package manager
+- Git (for version control)
+
+### Required Python Packages
+- **Data Handling**: pandas, numpy, openpyxl
+- **Visualization**: streamlit, plotly
+- **Machine Learning**: scikit-learn
+- **Utilities**: python-dotenv, logging
+
+### Installation Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-org/cpi-analysis-dashboard.git
+   cd cpi-analysis-dashboard
+   ```
+
+2. **Create and activate a virtual environment (recommended)**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up the data files**
+   - Place the Excel data files in the `attached_assets` folder:
+     - `invoiced_jobs_this_year_20240912T18_36_36.439126Z.xlsx` (won bids)
+     - `DealItemReportLOST.xlsx` (lost bids)
+     - `Data Dictionary.xlsx` (optional, for reference)
+
+5. **Configure Streamlit (optional)**
+   - Create a `.streamlit` folder if it doesn't exist
+   - Create a `config.toml` file inside with the following contents:
+     ```toml
+     [server]
+     headless = true
+     address = "0.0.0.0"
+     port = 5000
+     
+     [theme]
+     # Theme is set programmatically in theme.py
+     ```
+
+6. **Run the application**
+   ```bash
+   streamlit run app.py
+   ```
+
+## Deployment Notes
+
+### Deployment Options
+
+1. **Streamlit Cloud**
+   - Easiest option for quick deployment
+   - Register at streamlit.io/cloud
+   - Connect your GitHub repository
+   - Select app.py as the entry point
+   - Set up any required secrets
+
+2. **Docker Container**
+   - Use the provided Dockerfile
+   - Build: `docker build -t cpi-dashboard .`
+   - Run: `docker run -p 5000:5000 cpi-dashboard`
+
+3. **Self-hosted Server**
+   - Install requirements on the server
+   - Set up a reverse proxy (Nginx/Apache)
+   - Use systemd or supervisor to manage the process
+
+### Environment Variables
+- `STREAMLIT_SERVER_PORT`: Port for Streamlit server (default: 5000)
+- `DATA_DIRECTORY`: Optional custom path to data files
+- `LOG_LEVEL`: Logging level (default: INFO)
+
+### Resource Requirements
+- **CPU**: Minimum 2 cores recommended
+- **RAM**: At least 4GB (8GB recommended for larger datasets)
+- **Storage**: 500MB for application and dependencies
+- **Network**: Standard HTTP/HTTPS ports open (80/443)
+
+## Maintenance & Troubleshooting
+
+### Regular Maintenance Tasks
+
+1. **Data Updates**
+   - Update the Excel data files in `attached_assets` folder monthly
+   - After updating, verify data integrity with the data quality tools
+   - Monitor model drift metrics to determine if retraining is needed
+
+2. **Model Retraining**
+   - Retrain models quarterly or when drift metrics exceed thresholds
+   - Use the model monitoring dashboard to track performance
+   - Consider A/B testing new model versions before full deployment
+
+3. **Dependency Updates**
+   - Review and update Python dependencies quarterly
+   - Test application thoroughly after updates
+   - Consider pinning crucial dependencies to specific versions
+
+### Common Issues and Solutions
+
+1. **Data Loading Errors**
+   - **Symptoms**: Application fails to start or shows "Error loading data" message
+   - **Causes**: Missing data files, corrupted Excel files, changed column names
+   - **Solutions**: 
+     - Verify file paths in `data_processor.py`
+     - Check Excel file integrity
+     - Update column mappings if data structure has changed
+
+2. **Performance Issues**
+   - **Symptoms**: Slow loading times, high memory usage
+   - **Causes**: Large datasets, inefficient filtering, memory leaks
+   - **Solutions**: 
+     - Implement data sampling for large datasets
+     - Optimize pandas operations (use inplace where appropriate)
+     - Add caching for expensive computations
+
+3. **Visualization Rendering Problems**
+   - **Symptoms**: Charts not displaying or displaying incorrectly
+   - **Causes**: Data type issues, theme conflicts, Plotly version incompatibilities
+   - **Solutions**:
+     - Check data types before visualization
+     - Verify theme settings in `theme.py`
+     - Update Plotly or pin to a compatible version
+
+4. **Model Prediction Errors**
+   - **Symptoms**: Unrealistic predictions, error messages during prediction
+   - **Causes**: Data preprocessing issues, model drift, feature mismatch
+   - **Solutions**:
+     - Validate input data against expected ranges
+     - Retrain models with latest data
+     - Ensure feature engineering consistency
+
+### Logging and Monitoring
+
+- Application logs are stored in the `logs` directory
+- Log rotation is configured to maintain 7 days of history
+- Key metrics to monitor:
+  - Data quality scores
+  - Model performance metrics (RMSE, R²)
+  - Drift detection alerts
+  - User interaction patterns
+
+## Future Enhancements
+
+### Planned Features
+
+1. **Advanced Analytics**
+   - Time series analysis of CPI trends
+   - Competitive intelligence dashboard
+   - Automated anomaly detection
+
+2. **Model Improvements**
+   - Ensemble model optimization
+   - Hyperparameter tuning automation
+   - Feature importance visualization
+   - Automated feature selection
+
+3. **User Experience**
+   - Custom user profiles with saved settings
+   - Export functionality for reports and visualizations
+   - Notification system for data updates and model drift
+   - Mobile-optimized interface
+
+4. **Technical Enhancements**
+   - Automated data pipeline for Excel updates
+   - Containerization with Docker Compose
+   - CI/CD pipeline for testing and deployment
+   - API endpoints for integration with other systems
+
+### Integration Opportunities
+
+1. **CRM System Integration**
+   - Automated bid data import
+   - Export recommendations to CRM
+   - Real-time bid evaluation
+
+2. **Business Intelligence Tools**
+   - Power BI/Tableau connectors
+   - Scheduled report generation
+   - Dashboard embedding
+
+3. **Workflow Automation**
+   - Slack/Teams notifications
+   - Email reports and alerts
+   - Calendar integration for regular updates
+
+### Research Directions
+
+1. **Advanced ML Techniques**
+   - Explore deep learning approaches for CPI prediction
+   - Implement natural language processing for project descriptions
+   - Investigate reinforcement learning for pricing optimization
+
+2. **Market Research Insights**
+   - Segment-specific pricing models
+   - Competitor analysis framework
+   - Market elasticity modeling
+
+3. **User Behavior Analysis**
+   - Track and analyze decision patterns
+   - Develop personalized recommendation algorithms
+   - Implement A/B testing framework for recommendations
