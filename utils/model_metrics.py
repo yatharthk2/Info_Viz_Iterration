@@ -495,7 +495,7 @@ def create_model_comparison_chart(model_scores: Dict[str, Dict[str, float]]) -> 
             name=display_metric,
             text=text_values,
             textposition='auto',
-            marker_color=COLOR_SYSTEM['CHARTS'][f'SERIES{i+1}'],
+            marker_color=COLOR_SYSTEM['CHARTS'][f'SERIES{i+1}' if i < 7 else 'SERIES1'],
             hovertemplate="Model: %{x}<br>" + f"{metric}: " + "%{text}<br><extra></extra>"
         ))
     
