@@ -226,17 +226,23 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
             # Create 3 columns for inputs
             col1, col2, col3 = st.columns(3)
             
-            # Calculate min, max, and default values from data
+            # Calculate min, max, and default values from data with safeguards to prevent equal min/max
             ir_min = max(1, int(combined_data_engineered['IR'].min()))
             ir_max = min(100, int(combined_data_engineered['IR'].max()))
+            if ir_min >= ir_max:  # Ensure min is less than max
+                ir_min = max(1, ir_max - 10)
             ir_default = int((ir_min + ir_max) / 2)
             
             loi_min = max(1, int(combined_data_engineered['LOI'].min()))
             loi_max = min(60, int(combined_data_engineered['LOI'].max() * 1.2))  # Add some buffer
+            if loi_min >= loi_max:  # Ensure min is less than max
+                loi_min = max(1, loi_max - 5)
             loi_default = int((loi_min + loi_max) / 2)
             
             completes_min = max(10, int(combined_data_engineered['Completes'].min()))
             completes_max = min(2000, int(combined_data_engineered['Completes'].max() * 1.2))  # Add some buffer
+            if completes_min >= completes_max:  # Ensure min is less than max
+                completes_min = max(10, completes_max - 100)
             completes_default = int((completes_min + completes_max) / 2)
             
             with col1:
