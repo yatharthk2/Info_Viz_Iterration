@@ -47,6 +47,7 @@ from utils.model_metrics import (
     create_feature_dependence_plot,
     create_model_comparison_chart
 )
+from utils.theme import COLOR_SYSTEM, format_chart_for_dark_mode
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -127,7 +128,7 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
             # Display model metrics in expandable section
             with st.expander("🔍 Model Performance Details", expanded=False):
                 # Create tabs for different model metrics views
-                metric_tabs = st.tabs(["Model Accuracy", "Detailed Metrics"])
+                metric_tabs = st.tabs(["Model Accuracy", "Detailed Metrics", "Model Diagnostics", "Learning Curve"])
                 
                 with metric_tabs[0]:
                     # Create a sorted list of models by R² score
@@ -176,7 +177,8 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                     metrics_display = []
                     for model_name, metrics in model_scores.items():
                         metrics_row = {'Model': model_name}
-                        metrics_row.update(metrics)
+                        # Use dictionary comprehension to ensure correct type conversion
+                        metrics_row.update({k: v for k, v in metrics.items()})
                         metrics_display.append(metrics_row)
                     
                     if metrics_display:
@@ -186,6 +188,154 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                         )
                     else:
                         st.warning("Detailed metrics not available")
+                        
+                with metric_tabs[2]:
+                    st.subheader("Model Diagnostics")
+                    
+                    # Get the best model based on R² score
+                    best_model_name = None
+                    best_r2 = -float('inf')
+                    for model_name, scores in model_scores.items():
+                        if 'R²' in scores and scores['R²'] > best_r2:
+                            best_r2 = scores['R²']
+                            best_model_name = model_name
+                    
+                    if best_model_name and best_model_name in trained_models:
+                        best_model = trained_models[best_model_name]
+                        
+                        # Evaluate model performance
+                        evaluation = evaluate_model_performance(
+                            best_model, 
+                            model_evaluation_data['X_train'], 
+                            model_evaluation_data['X_test'],
+                            model_evaluation_data['y_train'], 
+                            model_evaluation_data['y_test']
+                        )
+                        
+                        # Display model evaluation
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.markdown(f"**Model**: {best_model_name}")
+                            st.markdown(f"**Fit Assessment**: {evaluation['fitting_assessment']}")
+                            
+                        with col2:
+                            # Visualize train/test metrics
+                            metrics_to_show = ['R²', 'RMSE', 'MAE']
+                            fig = go.Figure()
+                            
+                            for i, metric in enumerate(metrics_to_show):
+                                train_val = evaluation[metric]['train']
+                                test_val = evaluation[metric]['test']
+                                
+                                fig.add_trace(go.Bar(
+                                    x=[f"{metric} (Train)", f"{metric} (Test)"],
+                                    y=[train_val, test_val],
+                                    name=metric,
+                                    marker_color=COLOR_SYSTEM['CHARTS'][f'SERIES{i+1}'],
+                                ))
+                            
+                            fig = format_chart_for_dark_mode(fig, "Train vs Test Metrics", height=200)
+                            st.plotly_chart(fig, use_container_width=True)
+                        
+                        # Show assessment and recommendations
+                        st.subheader("Assessment")
+                        
+                        if evaluation['fitting_assessment'] == 'Overfitting':
+                            st.warning(f"⚠️ **Overfitting Detected**: Train R² = {evaluation['R²']['train']:.4f}, Test R² = {evaluation['R²']['test']:.4f}")
+                        elif evaluation['fitting_assessment'] == 'Underfitting':
+                            st.warning(f"⚠️ **Underfitting Detected**: Train R² = {evaluation['R²']['train']:.4f}, Test R² = {evaluation['R²']['test']:.4f}")
+                        else:
+                            st.success(f"✅ **Good Model Fit**: Train R² = {evaluation['R²']['train']:.4f}, Test R² = {evaluation['R²']['test']:.4f}")
+                        
+                        st.markdown(f"**Recommendation**: {evaluation['recommendation']}")
+                        
+                        # Create residuals plot
+                        st.subheader("Residuals Analysis")
+                        residuals_fig = create_residuals_plot(
+                            best_model, 
+                            model_evaluation_data['X_test'], 
+                            model_evaluation_data['y_test']
+                        )
+                        st.plotly_chart(residuals_fig, use_container_width=True)
+                        
+                        # Add explanation for residuals plot
+                        with st.expander("📈 How to interpret residuals?"):
+                            st.markdown("""
+                            **Residuals** are the differences between actual and predicted values.
+                            
+                            - **Scattered randomly**: Good model fit (desired)
+                            - **Pattern/trend**: Model may be missing important factors
+                            - **Points far from zero**: Potential outliers or poor predictions
+                            - **More points above/below zero**: Model may be biased
+                            """)
+                    else:
+                        st.warning("Model diagnostics not available. Please train models first.")
+                        
+                with metric_tabs[3]:
+                    st.subheader("Learning Curve Analysis")
+                    
+                    # Get the best model
+                    if best_model_name and best_model_name in trained_models:
+                        best_model = trained_models[best_model_name]
+                        
+                        # Generate learning curve plot
+                        learning_curve_fig = plot_learning_curve(
+                            best_model, 
+                            X, 
+                            y
+                        )
+                        st.plotly_chart(learning_curve_fig, use_container_width=True)
+                        
+                        # Add feature dependence plot for key features
+                        st.subheader("Feature Effect on CPI")
+                        
+                        # Select key features to analyze based on feature importance
+                        key_features = []
+                        if len(feature_importance) > 0:
+                            top_features = sorted(
+                                [(feat, imp) for feat, imp in feature_importance.items()],
+                                key=lambda x: x[1],
+                                reverse=True
+                            )[:3]  # Get top 3 features
+                            key_features = [feat for feat, _ in top_features]
+                        else:
+                            # Default to basic features if no feature importance available
+                            key_features = ['IR', 'LOI', 'Completes']
+                        
+                        # Create tabs for each feature
+                        feature_tabs = st.tabs(key_features)
+                        
+                        for i, feature in enumerate(key_features):
+                            with feature_tabs[i]:
+                                if feature in X.columns:
+                                    feature_plot = create_feature_dependence_plot(
+                                        best_model, 
+                                        X, 
+                                        feature
+                                    )
+                                    st.plotly_chart(feature_plot, use_container_width=True)
+                                    
+                                    # Add explanation of what this means for pricing
+                                    if feature == 'IR':
+                                        st.markdown("""
+                                        **Pricing Strategy**: For low IR projects, consider a premium 
+                                        as they're more expensive to field. High IR projects allow for more 
+                                        competitive pricing.
+                                        """)
+                                    elif feature == 'LOI':
+                                        st.markdown("""
+                                        **Pricing Strategy**: Longer surveys require higher incentives and 
+                                        have higher dropout rates. Consider a higher CPI for longer LOIs.
+                                        """)
+                                    elif feature == 'Completes':
+                                        st.markdown("""
+                                        **Pricing Strategy**: Larger sample sizes benefit from economies of scale. 
+                                        Consider volume discounts for large projects to remain competitive.
+                                        """)
+                                else:
+                                    st.warning(f"Feature '{feature}' not found in the dataset")
+                    else:
+                        st.warning("Learning curve analysis not available. Please train models first.")
             
             # Show enhanced feature importance visualization
             st.header("Feature Importance Analysis")
