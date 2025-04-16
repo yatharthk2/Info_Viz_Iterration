@@ -13,31 +13,75 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def load_data() -> Optional[pd.DataFrame]:
+def load_data() -> Dict[str, pd.DataFrame]:
     """
-    Load CPI data from source.
-    This function would typically load from a database or file.
+    Load CPI data from Excel files.
+    Loads both won bids (invoiced jobs) and lost bids (DealItemReportLOST).
     
     Returns:
-        Optional[pd.DataFrame]: DataFrame with CPI data or None if loading fails
+        Dict[str, pd.DataFrame]: Dictionary containing different dataframes:
+            - 'won': Won deals dataframe
+            - 'won_filtered': Won deals with extreme values filtered out
+            - 'lost': Lost deals dataframe
+            - 'lost_filtered': Lost deals with extreme values filtered out
+            - 'combined': Combined dataframe of won and lost deals
+            - 'combined_filtered': Combined dataframe with extreme values filtered out
     """
     try:
-        # For demonstration, we'll simulate loading data
-        # In a real application, this would connect to a database or load from files
+        # Define file paths
+        won_file_path = 'attached_assets/invoiced_jobs_this_year_20240912T18_36_36.439126Z.xlsx'
+        lost_file_path = 'attached_assets/DealItemReportLOST.xlsx'
         
-        # Check if sample data exists in this environment
-        sample_data_path = os.path.join(os.path.dirname(__file__), 'data', 'cpi_data.csv')
+        # Check if files exist
+        if os.path.exists(won_file_path) and os.path.exists(lost_file_path):
+            logger.info(f"Loading data from Excel files")
+            
+            # Load won bids (invoiced jobs)
+            won_data = pd.read_excel(won_file_path)
+            logger.info(f"Loaded won data: {won_data.shape[0]} rows, {won_data.shape[1]} columns")
+            
+            # Load lost bids (DealItemReportLOST)
+            lost_data = pd.read_excel(lost_file_path)
+            logger.info(f"Loaded lost data: {lost_data.shape[0]} rows, {lost_data.shape[1]} columns")
+            
+            # Process won data based on data dictionary
+            # As per data dictionary: invoiced jobs this year
+            won_processed = process_won_data(won_data)
+            
+            # Process lost data based on data dictionary
+            # As per data dictionary: Deal Item Report Lost
+            lost_processed = process_lost_data(lost_data)
+            
+            # Combine the data
+            won_processed['Type'] = 'Won'
+            lost_processed['Type'] = 'Lost'
+            combined_data = pd.concat([won_processed, lost_processed], ignore_index=True)
+            
+            # Clean the combined data
+            combined_filtered = clean_data(combined_data, filter_extremes=True)
+            won_filtered = combined_filtered[combined_filtered['Type'] == 'Won']
+            lost_filtered = combined_filtered[combined_filtered['Type'] == 'Lost']
+            
+            # Also clean individual datasets for separate analysis
+            won_cleaned = clean_data(won_processed, filter_extremes=True)
+            lost_cleaned = clean_data(lost_processed, filter_extremes=True)
+            
+            # Create dictionary of dataframes
+            data_dict = {
+                'won': won_processed,
+                'won_filtered': won_cleaned,
+                'lost': lost_processed,
+                'lost_filtered': lost_cleaned,
+                'combined': combined_data,
+                'combined_filtered': combined_filtered
+            }
+            
+            return data_dict
         
-        if os.path.exists(sample_data_path):
-            logger.info(f"Loading data from {sample_data_path}")
-            return pd.read_csv(sample_data_path)
+        # If files don't exist or can't be loaded, create a minimal dataset for testing
+        logger.warning("Excel files not found. Creating minimal demo dataset.")
         
-        # If no sample data file exists, create a simple synthetic dataset for demonstration
-        # This is just a fallback for testing the application structure
-        logger.warning("No data file found. Creating minimal demo dataset.")
-        
-        # Create synthetic data - this is just for application structure testing
-        # In a real application, you would return None or an appropriate error
+        # Create synthetic data for testing
         data = {
             'Type': ['Won', 'Won', 'Won', 'Lost', 'Lost', 'Won', 'Lost', 'Won', 'Lost', 'Won'],
             'IR': [20, 45, 10, 15, 50, 30, 25, 40, 35, 5],
@@ -46,11 +90,200 @@ def load_data() -> Optional[pd.DataFrame]:
             'CPI': [15.50, 10.25, 25.75, 30.00, 18.50, 12.75, 22.00, 9.50, 28.00, 35.00]
         }
         
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        filtered_df = clean_data(df, filter_extremes=True)
+        
+        won_data = df[df['Type'] == 'Won']
+        lost_data = df[df['Type'] == 'Lost']
+        won_filtered = filtered_df[filtered_df['Type'] == 'Won']
+        lost_filtered = filtered_df[filtered_df['Type'] == 'Lost']
+        
+        return {
+            'won': won_data,
+            'won_filtered': won_filtered,
+            'lost': lost_data,
+            'lost_filtered': lost_filtered,
+            'combined': df,
+            'combined_filtered': filtered_df
+        }
     
     except Exception as e:
         logger.error(f"Error loading data: {e}", exc_info=True)
-        return None
+        # Create a minimal dataset in case of error
+        data = {
+            'Type': ['Won', 'Won', 'Won', 'Lost', 'Lost'],
+            'IR': [20, 45, 10, 15, 50],
+            'LOI': [10, 15, 20, 15, 10],
+            'Completes': [200, 500, 300, 250, 400],
+            'CPI': [15.50, 10.25, 25.75, 30.00, 18.50]
+        }
+        
+        df = pd.DataFrame(data)
+        
+        return {
+            'won': df[df['Type'] == 'Won'],
+            'won_filtered': df[df['Type'] == 'Won'],
+            'lost': df[df['Type'] == 'Lost'],
+            'lost_filtered': df[df['Type'] == 'Lost'],
+            'combined': df,
+            'combined_filtered': df
+        }
+
+
+def process_won_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Process the won bids data (invoiced jobs) based on the data dictionary.
+    
+    Args:
+        df (pd.DataFrame): Raw dataframe of invoiced jobs
+        
+    Returns:
+        pd.DataFrame: Processed dataframe with standardized columns
+    """
+    try:
+        # Create a copy to avoid modifying original
+        processed_df = df.copy()
+        
+        # According to data dictionary:
+        # Column M = CPI
+        # Column N = Actual IR
+        # Column O = Actual LOI
+        # Column L = Complete (Sample Size)
+        
+        # Map columns to standardized names
+        col_mapping = {
+            'M': 'CPI',
+            'N': 'IR',
+            'O': 'LOI',
+            'L': 'Completes'
+        }
+        
+        # Initialize result dataframe with required columns
+        result_df = pd.DataFrame()
+        
+        # Extract and rename columns
+        for excel_col, new_name in col_mapping.items():
+            # Find the actual column name that starts with "Column -" + excel_col
+            # If not found, try using the Excel column letter or index directly
+            col_candidates = [c for c in processed_df.columns if c.startswith(f"Column - {excel_col}") or c == excel_col]
+            
+            if col_candidates:
+                col_name = col_candidates[0]
+                result_df[new_name] = processed_df[col_name]
+            else:
+                # Try to use column index
+                try:
+                    col_idx = ord(excel_col) - ord('A')
+                    if 0 <= col_idx < processed_df.shape[1]:
+                        result_df[new_name] = processed_df.iloc[:, col_idx]
+                    else:
+                        logger.warning(f"Could not map column {excel_col} to index {col_idx}")
+                        result_df[new_name] = np.nan
+                except Exception as e:
+                    logger.warning(f"Error mapping column {excel_col}: {e}")
+                    result_df[new_name] = np.nan
+        
+        # Ensure all required columns are present
+        for col in ['CPI', 'IR', 'LOI', 'Completes']:
+            if col not in result_df.columns:
+                logger.warning(f"Column {col} not found in won data, using placeholder values")
+                result_df[col] = np.nan
+        
+        # Attempt to convert columns to appropriate data types
+        for col in result_df.columns:
+            if col in ['CPI', 'IR', 'LOI']:
+                result_df[col] = pd.to_numeric(result_df[col], errors='coerce')
+            elif col == 'Completes':
+                result_df[col] = pd.to_numeric(result_df[col], errors='coerce').fillna(0).astype(int)
+        
+        # Filter out rows with NaN values in critical columns
+        result_df = result_df.dropna(subset=['CPI'])
+        
+        logger.info(f"Processed won data: {result_df.shape[0]} rows, {result_df.shape[1]} columns")
+        return result_df
+    
+    except Exception as e:
+        logger.error(f"Error processing won data: {e}", exc_info=True)
+        # Return an empty dataframe with required columns
+        return pd.DataFrame(columns=['CPI', 'IR', 'LOI', 'Completes'])
+
+
+def process_lost_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Process the lost bids data (DealItemReportLOST) based on the data dictionary.
+    
+    Args:
+        df (pd.DataFrame): Raw dataframe of lost bids
+        
+    Returns:
+        pd.DataFrame: Processed dataframe with standardized columns
+    """
+    try:
+        # Create a copy to avoid modifying original
+        processed_df = df.copy()
+        
+        # According to data dictionary:
+        # Column F = IR
+        # Column G = LOI
+        # Column H = CustomerRate (quoted to customer) -> This becomes our CPI for lost bids
+        # Column E = Qty (the unit quantity being sold) -> This becomes our Completes
+        
+        # Map columns to standardized names
+        col_mapping = {
+            'F': 'IR',
+            'G': 'LOI',
+            'H': 'CPI',
+            'E': 'Completes'
+        }
+        
+        # Initialize result dataframe with required columns
+        result_df = pd.DataFrame()
+        
+        # Extract and rename columns
+        for excel_col, new_name in col_mapping.items():
+            # Find the actual column name that starts with "Column -" + excel_col
+            # If not found, try using the Excel column letter or index directly
+            col_candidates = [c for c in processed_df.columns if c.startswith(f"Column - {excel_col}") or c == excel_col]
+            
+            if col_candidates:
+                col_name = col_candidates[0]
+                result_df[new_name] = processed_df[col_name]
+            else:
+                # Try to use column index
+                try:
+                    col_idx = ord(excel_col) - ord('A')
+                    if 0 <= col_idx < processed_df.shape[1]:
+                        result_df[new_name] = processed_df.iloc[:, col_idx]
+                    else:
+                        logger.warning(f"Could not map column {excel_col} to index {col_idx}")
+                        result_df[new_name] = np.nan
+                except Exception as e:
+                    logger.warning(f"Error mapping column {excel_col}: {e}")
+                    result_df[new_name] = np.nan
+        
+        # Ensure all required columns are present
+        for col in ['CPI', 'IR', 'LOI', 'Completes']:
+            if col not in result_df.columns:
+                logger.warning(f"Column {col} not found in lost data, using placeholder values")
+                result_df[col] = np.nan
+        
+        # Attempt to convert columns to appropriate data types
+        for col in result_df.columns:
+            if col in ['CPI', 'IR', 'LOI']:
+                result_df[col] = pd.to_numeric(result_df[col], errors='coerce')
+            elif col == 'Completes':
+                result_df[col] = pd.to_numeric(result_df[col], errors='coerce').fillna(0).astype(int)
+        
+        # Filter out rows with NaN values in critical columns
+        result_df = result_df.dropna(subset=['CPI'])
+        
+        logger.info(f"Processed lost data: {result_df.shape[0]} rows, {result_df.shape[1]} columns")
+        return result_df
+    
+    except Exception as e:
+        logger.error(f"Error processing lost data: {e}", exc_info=True)
+        # Return an empty dataframe with required columns
+        return pd.DataFrame(columns=['CPI', 'IR', 'LOI', 'Completes'])
 
 def clean_data(data: pd.DataFrame, filter_extremes: bool = True) -> pd.DataFrame:
     """

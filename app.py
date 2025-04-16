@@ -71,27 +71,42 @@ def main():
         
         # Load and process data
         try:
-            # In a real application, this would load from a database or uploaded file
-            # For this example, we'll mock a simple loading function
-            raw_data = load_data()
+            # Load data from Excel files
+            data_dict = load_data()
             
-            if raw_data is None or raw_data.empty:
-                st.error("No data available. Please check your data source or upload a file.")
-                return
-                
-            # Clean data
-            cleaned_data = clean_data(raw_data, filter_extremes)
-            
-            # Split into won/lost categories
-            won_data = cleaned_data[cleaned_data['Type'] == 'Won'].copy()
-            lost_data = cleaned_data[cleaned_data['Type'] == 'Lost'].copy()
+            # Select filtered or unfiltered data based on user preference
+            if filter_extremes:
+                won_data = data_dict['won_filtered']
+                lost_data = data_dict['lost_filtered']
+                combined_data = data_dict['combined_filtered']
+            else:
+                won_data = data_dict['won']
+                lost_data = data_dict['lost']
+                combined_data = data_dict['combined']
             
             # Basic checks
             if len(won_data) == 0 or len(lost_data) == 0:
                 st.warning("One or more bid categories has no data. Analysis may be limited.")
             
             # Engineer features for modeling
-            combined_data_engineered = engineer_features(cleaned_data)
+            combined_data_engineered = engineer_features(combined_data)
+            
+            # Display data source information
+            st.sidebar.markdown("---")
+            st.sidebar.subheader("Data Source")
+            st.sidebar.markdown(
+                f"**Won bids**: {len(won_data)} records<br>"
+                f"**Lost bids**: {len(lost_data)} records<br>"
+                f"**Total**: {len(combined_data)} records",
+                unsafe_allow_html=True
+            )
+            
+            # Add data quality information
+            if filter_extremes:
+                st.sidebar.markdown(
+                    "**Note**: Extreme values have been filtered out to improve analysis quality.",
+                    unsafe_allow_html=True
+                )
         
         except Exception as e:
             logger.error(f"Error loading or processing data: {e}", exc_info=True)
@@ -100,11 +115,11 @@ def main():
             
         # Display the selected page
         if page == "Overview":
-            show_overview(won_data, lost_data, cleaned_data)
+            show_overview(won_data, lost_data, combined_data)
         elif page == "CPI Prediction":
             show_prediction(combined_data_engineered, won_data, lost_data)
         elif page == "Insights & Recommendations":
-            show_insights(won_data, lost_data, cleaned_data)
+            show_insights(won_data, lost_data, combined_data)
     
     except Exception as e:
         logger.error(f"Application error: {e}", exc_info=True)
