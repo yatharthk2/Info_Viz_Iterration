@@ -390,6 +390,193 @@ COLOR_SYSTEM = {
 - `analyze_outliers()`: Quantifies outliers across key variables
 - `generate_quick_insights()`: Creates a markdown summary of key insights
 
+### utils/model_metrics.py
+**Purpose**: Provides comprehensive model evaluation and visualization tools for model diagnostics.
+
+**Key Functions**:
+- `evaluate_model_performance()`: Evaluates model performance with multiple metrics
+- `plot_learning_curve()`: Creates learning curve visualizations to detect over/underfitting
+- `create_residuals_plot()`: Generates residual analysis plots for model diagnostics
+- `create_feature_dependence_plot()`: Shows how predictions change with feature values
+- `create_model_comparison_chart()`: Compares multiple models on normalized performance metrics
+
+**Detailed Functions**:
+
+#### `plot_learning_curve()`
+```python
+def plot_learning_curve(model: Any, X: pd.DataFrame, y: pd.Series, cv: int = 5) -> go.Figure:
+    """
+    Create a learning curve visualization to detect overfitting/underfitting.
+    
+    Args:
+        model: Trained sklearn model
+        X: Feature matrix
+        y: Target vector
+        cv: Number of cross-validation folds
+        
+    Returns:
+        Plotly figure with learning curve visualization
+    """
+    # Generate learning curve data
+    train_sizes, train_scores, test_scores = learning_curve(
+        model, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10),
+        scoring='r2', n_jobs=-1
+    )
+    
+    # Calculate means and standard deviations
+    train_mean = np.mean(train_scores, axis=1)
+    train_std = np.std(train_scores, axis=1)
+    test_mean = np.mean(test_scores, axis=1)
+    test_std = np.std(test_scores, axis=1)
+    
+    # Create figure
+    fig = go.Figure()
+    
+    # Add training score
+    fig.add_trace(go.Scatter(
+        x=train_sizes,
+        y=train_mean,
+        mode='lines+markers',
+        name='Training Score',
+        line=dict(color=COLOR_SYSTEM['CHARTS']['SERIES1']),
+        marker=dict(size=8, symbol='circle'),
+        hovertemplate='Training size: %{x}<br>R² Score: %{y:.4f}<extra></extra>'
+    ))
+    
+    # Add shaded area for training score std dev
+    fig.add_trace(go.Scatter(
+        x=np.concatenate([train_sizes, train_sizes[::-1]]),
+        y=np.concatenate([train_mean + train_std, (train_mean - train_std)[::-1]]),
+        fill='toself',
+        fillcolor=f'rgba({hex_to_rgb(COLOR_SYSTEM["CHARTS"]["SERIES1"])}, 0.2)',
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    
+    # Add validation score
+    fig.add_trace(go.Scatter(
+        x=train_sizes,
+        y=test_mean,
+        mode='lines+markers',
+        name='Validation Score',
+        line=dict(color=COLOR_SYSTEM['CHARTS']['SERIES2']),
+        marker=dict(size=8, symbol='circle'),
+        hovertemplate='Training size: %{x}<br>R² Score: %{y:.4f}<extra></extra>'
+    ))
+    
+    # Add shaded area for validation score std dev
+    fig.add_trace(go.Scatter(
+        x=np.concatenate([train_sizes, train_sizes[::-1]]),
+        y=np.concatenate([test_mean + test_std, (test_mean - test_std)[::-1]]),
+        fill='toself',
+        fillcolor=f'rgba({hex_to_rgb(COLOR_SYSTEM["CHARTS"]["SERIES2"])}, 0.2)',
+        line=dict(width=0),
+        showlegend=False,
+        hoverinfo='none'
+    ))
+    
+    # Format chart
+    fig = format_chart_for_dark_mode(fig, "Learning Curve Analysis")
+    
+    fig.update_layout(
+        xaxis_title="Training Examples",
+        yaxis_title="R² Score",
+        hovermode="closest"
+    )
+    
+    return fig
+```
+
+#### `create_residuals_plot()`
+```python
+def create_residuals_plot(model: Any, X: pd.DataFrame, y: pd.Series) -> go.Figure:
+    """
+    Create a residuals plot for model diagnostics.
+    
+    Args:
+        model: Trained sklearn model
+        X: Feature matrix
+        y: Target vector
+        
+    Returns:
+        Plotly figure with residuals analysis
+    """
+    # Generate predictions
+    y_pred = model.predict(X)
+    residuals = y - y_pred
+    
+    # Create figure
+    fig = go.Figure()
+    
+    # Add scatter plot for residuals
+    fig.add_trace(go.Scatter(
+        x=y_pred,
+        y=residuals,
+        mode='markers',
+        marker=dict(
+            size=8,
+            color=COLOR_SYSTEM['CHARTS']['SERIES1'],
+            opacity=0.7
+        ),
+        name='Residuals',
+        hovertemplate=(
+            "Predicted CPI: $%{x:.2f}<br>" +
+            "Residual: $%{y:.2f}<br>" +
+            "<extra></extra>"
+        )
+    ))
+    
+    # Add zero line
+    fig.add_shape(
+        type="line",
+        x0=min(y_pred),
+        y0=0,
+        x1=max(y_pred),
+        y1=0,
+        line=dict(
+            color=COLOR_SYSTEM['NEUTRAL']['LIGHT'],
+            width=2,
+            dash="dash",
+        )
+    )
+    
+    # Detect outliers
+    std_residuals = (residuals - np.mean(residuals)) / np.std(residuals)
+    outlier_indices = np.where(np.abs(std_residuals) > 2)[0]
+    
+    # Add outlier points if any
+    if len(outlier_indices) > 0:
+        fig.add_trace(go.Scatter(
+            x=y_pred[outlier_indices],
+            y=residuals[outlier_indices],
+            mode='markers',
+            marker=dict(
+                size=12,
+                color=COLOR_SYSTEM['SEMANTIC']['ERROR'],
+                symbol='circle-open',
+                line=dict(width=2, color=COLOR_SYSTEM['SEMANTIC']['ERROR'])
+            ),
+            name='Outliers',
+            hovertemplate=(
+                "Predicted CPI: $%{x:.2f}<br>" +
+                "Residual: $%{y:.2f}<br>" +
+                "<extra>Potential outlier</extra>"
+            )
+        ))
+    
+    # Format chart
+    fig = format_chart_for_dark_mode(fig, "Residuals Analysis")
+    
+    fig.update_layout(
+        xaxis_title="Predicted CPI ($)",
+        yaxis_title="Residuals ($)",
+        hovermode="closest"
+    )
+    
+    return fig
+```
+
 **Detailed Functions**:
 
 #### `generate_quick_insights()`
