@@ -45,7 +45,7 @@ def analyze_data_quality(df: pd.DataFrame, dataset_name: str) -> Dict[str, Any]:
         
         # 1. Missing Values Analysis
         missing_counts = df.isnull().sum()
-        missing_percentages = (missing_counts / len(df) * 100).round(2)
+        missing_percentages = missing_counts.apply(lambda x: round(x / len(df) * 100, 2))
         
         # Store missing values info in results
         for col in df.columns:
@@ -77,7 +77,7 @@ def analyze_data_quality(df: pd.DataFrame, dataset_name: str) -> Dict[str, Any]:
             # Count outliers
             outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)][col]
             outlier_count = len(outliers)
-            outlier_percentage = (outlier_count / len(df) * 100).round(2)
+            outlier_percentage = round(outlier_count / len(df) * 100, 2)
             
             # Store outlier info
             results['outliers'][col] = {
@@ -100,7 +100,7 @@ def analyze_data_quality(df: pd.DataFrame, dataset_name: str) -> Dict[str, Any]:
         for col in key_cols:
             if col in df.columns:
                 zero_count = (df[col] == 0).sum()
-                zero_percentage = (zero_count / len(df) * 100).round(2)
+                zero_percentage = round(zero_count / len(df) * 100, 2)
                 
                 # Store zero info
                 results['zeros'][col] = {
@@ -177,7 +177,15 @@ def analyze_data_quality(df: pd.DataFrame, dataset_name: str) -> Dict[str, Any]:
         logger.error(f"Error in data quality analysis: {e}", exc_info=True)
         return {
             'dataset_name': dataset_name,
-            'error': str(e)
+            'row_count': 0,
+            'column_count': 0,
+            'missing_values': {},
+            'outliers': {},
+            'zeros': {},
+            'skewness': {},
+            'collinearity': {},
+            'data_ranges': {},
+            'recommendations': [f"Error: {str(e)}"]
         }
 
 def calculate_feature_engineering_potential(df: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
@@ -198,7 +206,7 @@ def calculate_feature_engineering_potential(df: pd.DataFrame) -> Dict[str, Dict[
         has_key_cols = all(col in df.columns for col in ['IR', 'LOI', 'Completes', 'CPI', 'Type'])
         
         if not has_key_cols:
-            return {'error': 'Missing key columns for feature engineering assessment'}
+            return {'missing_columns': {'error': 'Missing key columns for feature engineering assessment'}}
         
         # 1. Assess ratio features
         ratio_features = [
@@ -307,7 +315,7 @@ def calculate_feature_engineering_potential(df: pd.DataFrame) -> Dict[str, Dict[
     
     except Exception as e:
         logger.error(f"Error in feature engineering assessment: {e}", exc_info=True)
-        return {'error': str(e)}
+        return {'error_info': {'error': str(e)}}
 
 def assess_modeling_suitability(won_data: pd.DataFrame, lost_data: pd.DataFrame) -> Dict[str, Any]:
     """
@@ -359,8 +367,8 @@ def assess_modeling_suitability(won_data: pd.DataFrame, lost_data: pd.DataFrame)
             )
         
         # 2. Class Balance Assessment
-        won_percentage = (won_count / total_count * 100).round(2)
-        lost_percentage = (lost_count / total_count * 100).round(2)
+        won_percentage = round(won_count / total_count * 100, 2)
+        lost_percentage = round(lost_count / total_count * 100, 2)
         class_imbalance = abs(won_percentage - lost_percentage)
         
         results['class_balance'] = {
@@ -460,7 +468,13 @@ def assess_modeling_suitability(won_data: pd.DataFrame, lost_data: pd.DataFrame)
     
     except Exception as e:
         logger.error(f"Error in modeling suitability assessment: {e}", exc_info=True)
-        return {'error': str(e)}
+        return {
+            'data_volume': {},
+            'class_balance': {},
+            'feature_quality': {},
+            'expected_performance': {},
+            'recommendations': [f"Error: {str(e)}"]
+        }
 
 def identify_key_pricing_factors(combined_data: pd.DataFrame) -> Dict[str, Any]:
     """
