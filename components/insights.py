@@ -805,17 +805,17 @@ def show_insights(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Add key findings from combination analysis
+            # Add key findings from combination analysis using Streamlit components
             st.markdown("""
             <div style="background-color:rgba(242, 142, 43, 0.2); padding:15px; border-radius:5px; margin-top:20px; border-left:5px solid #f28e2b;">
                 <h4 style="margin-top:0; color:#f28e2b;">Key Findings from Combination Analysis</h4>
-                <ol>
-                    <li><strong>High-Leverage Combinations</strong>: The largest pricing gaps typically occur in projects with both low IR and high LOI - these are the most challenging projects where pricing strategy is most critical</li>
-                    <li><strong>Competitive Edge</strong>: For high IR / low LOI combinations, the pricing gap is minimal, suggesting that factors beyond price (like speed, quality, or relationship) may be more important</li>
-                    <li><strong>Strategic Opportunity</strong>: Medium IR / high LOI combinations often show substantial pricing gaps, representing an opportunity for strategic pricing</li>
-                </ol>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Use native Streamlit list
+            st.write("1. **High-Leverage Combinations**: The largest pricing gaps typically occur in projects with both low IR and high LOI - these are the most challenging projects where pricing strategy is most critical")
+            st.write("2. **Competitive Edge**: For high IR / low LOI combinations, the pricing gap is minimal, suggesting that factors beyond price (like speed, quality, or relationship) may be more important")
+            st.write("3. **Strategic Opportunity**: Medium IR / high LOI combinations often show substantial pricing gaps, representing an opportunity for strategic pricing")
         
         # Recommendations section with enhanced styling
         st.header("Strategic Pricing Recommendations")
