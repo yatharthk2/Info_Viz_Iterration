@@ -13,19 +13,90 @@ from typing import Dict, Any
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Dark theme colors
+# Enhanced color system
+COLOR_SYSTEM = {
+    # Primary palette
+    'PRIMARY': {
+        'MAIN': '#4e79a7',       # Primary blue - headers, primary elements
+        'LIGHT': '#7EB3FF',      # Lighter blue - highlights
+        'DARK': '#3A5980',       # Darker blue - emphasis
+        'CONTRAST': '#FFFFFF'    # White - text on dark backgrounds
+    },
+    
+    # Accent colors
+    'ACCENT': {
+        'BLUE': '#4e79a7',       # Primary blue - won bids
+        'ORANGE': '#f28e2b',     # Orange - lost bids
+        'GREEN': '#52BC9F',      # Green - positive indicators
+        'RED': '#E15759',        # Red - negative indicators
+        'PURPLE': '#b07aa1',     # Purple - predictions
+        'YELLOW': '#F6C85F'      # Yellow - warnings, highlights
+    },
+    
+    # Neutral tones
+    'NEUTRAL': {
+        'WHITE': '#FFFFFF',
+        'LIGHTEST': '#F8F9FA',
+        'LIGHTER': '#E9ECEF',
+        'LIGHT': '#BBBBBB',
+        'MEDIUM': '#888888',
+        'DARK': '#555555',
+        'DARKER': '#333333',
+        'DARKEST': '#1E2130',
+        'BLACK': '#0E1117'
+    },
+    
+    # Semantic colors (for specific meanings)
+    'SEMANTIC': {
+        'SUCCESS': '#52BC9F',
+        'WARNING': '#F6C85F',
+        'ERROR': '#E15759',
+        'INFO': '#4e79a7'
+    },
+    
+    # Chart-specific colors 
+    'CHARTS': {
+        'WON': '#4e79a7',        # Blue
+        'LOST': '#f28e2b',       # Orange
+        'WON_TRANS': 'rgba(78, 121, 167, 0.7)',
+        'LOST_TRANS': 'rgba(242, 142, 43, 0.7)',
+        'GRADIENT_1': '#3A5980',
+        'GRADIENT_2': '#7EB3FF',
+        'GRADIENT_3': '#FFFFFF'
+    }
+}
+
+# Backward compatibility with existing code
 DARK_THEME_COLORS = {
-    "background": "#111111",
+    "background": "#0E1117",
     "secondary_background": "#1E2130",
-    "primary": "#4e79a7",
-    "success": "#52BC9F",
-    "warning": "#F6C85F",
-    "error": "#E15759",
-    "text": "#FFFFFF",
-    "secondary_text": "#BBBBBB",
-    "highlight": "#7EB3FF",
-    "muted": "#555555",
-    "borders": "#333333",
+    "primary": COLOR_SYSTEM['PRIMARY']['MAIN'],
+    "success": COLOR_SYSTEM['SEMANTIC']['SUCCESS'],
+    "warning": COLOR_SYSTEM['SEMANTIC']['WARNING'],
+    "error": COLOR_SYSTEM['SEMANTIC']['ERROR'],
+    "text": COLOR_SYSTEM['PRIMARY']['CONTRAST'],
+    "secondary_text": COLOR_SYSTEM['NEUTRAL']['LIGHT'],
+    "highlight": COLOR_SYSTEM['PRIMARY']['LIGHT'],
+    "muted": COLOR_SYSTEM['NEUTRAL']['DARK'],
+    "borders": COLOR_SYSTEM['NEUTRAL']['DARKER'],
+    "won": COLOR_SYSTEM['CHARTS']['WON'],
+    "lost": COLOR_SYSTEM['CHARTS']['LOST'],
+}
+
+# Typography system
+TYPOGRAPHY = {
+    'FONT_FAMILY': '"Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    'HEADING': {
+        'H1': {'size': '2.2rem', 'weight': '700', 'height': '1.2'},
+        'H2': {'size': '1.8rem', 'weight': '600', 'height': '1.3'},
+        'H3': {'size': '1.4rem', 'weight': '600', 'height': '1.4'},
+        'H4': {'size': '1.1rem', 'weight': '600', 'height': '1.5'}
+    },
+    'BODY': {
+        'LARGE': {'size': '1.1rem', 'weight': '400', 'height': '1.5'},
+        'NORMAL': {'size': '1rem', 'weight': '400', 'height': '1.5'},
+        'SMALL': {'size': '0.875rem', 'weight': '400', 'height': '1.4'}
+    }
 }
 
 def apply_custom_theme() -> None:
@@ -34,174 +105,201 @@ def apply_custom_theme() -> None:
     The theme is optimized for data visualization with dark backgrounds.
     """
     try:
-        # Add custom CSS
-        st.markdown("""
+        # Add custom CSS with enhanced styling using the color and typography systems
+        st.markdown(f"""
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
+        
         /* Base text styling */
-        html, body, [class*="css"] {
-            font-family: 'Source Sans Pro', sans-serif;
-            color: #FAFAFA;
-        }
+        html, body, [class*="css"] {{
+            font-family: {TYPOGRAPHY['FONT_FAMILY']};
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']};
+        }}
         
         /* Sidebar styling */
-        .css-1d391kg, .css-12oz5g7 {
-            background-color: #1E2130;
-        }
+        .css-1d391kg, .css-12oz5g7 {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']};
+        }}
         
         /* Headers */
-        h1, h2, h3, h4, h5 {
-            color: #FFFFFF !important;
+        h1, h2, h3, h4, h5 {{
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']} !important;
             font-weight: 600 !important;
-        }
-        h1 {
-            font-size: 2.2em !important;
+            line-height: 1.2 !important;
+        }}
+        h1 {{
+            font-size: {TYPOGRAPHY['HEADING']['H1']['size']} !important;
+            font-weight: {TYPOGRAPHY['HEADING']['H1']['weight']} !important;
             margin-bottom: 0.5em !important;
-            border-bottom: 2px solid #4e79a7;
+            border-bottom: 2px solid {COLOR_SYSTEM['PRIMARY']['MAIN']};
             padding-bottom: 0.3em;
-        }
-        h2 {
-            font-size: 1.8em !important;
+        }}
+        h2 {{
+            font-size: {TYPOGRAPHY['HEADING']['H2']['size']} !important;
+            font-weight: {TYPOGRAPHY['HEADING']['H2']['weight']} !important;
             margin-top: 1em !important;
-        }
-        h3 {
-            font-size: 1.4em !important;
+        }}
+        h3 {{
+            font-size: {TYPOGRAPHY['HEADING']['H3']['size']} !important;
+            font-weight: {TYPOGRAPHY['HEADING']['H3']['weight']} !important;
             margin-top: 1em !important;
-            color: #7EB3FF !important;
-        }
+            color: {COLOR_SYSTEM['PRIMARY']['LIGHT']} !important;
+        }}
         
         /* Statistics */
-        .metric-value {
+        .metric-value {{
             font-size: 2.5em !important;
             font-weight: bold !important;
-            color: #FFFFFF !important;
-        }
-        .metric-label {
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']} !important;
+        }}
+        .metric-label {{
             font-size: 1em !important;
-            color: #BBBBBB !important;
-        }
+            color: {COLOR_SYSTEM['NEUTRAL']['LIGHT']} !important;
+        }}
         
         /* Enhance container backgrounds */
-        div.stBlock {
-            background-color: #1E2130;
+        div.stBlock {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']};
             padding: 1em;
             border-radius: 5px;
-        }
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }}
         
         /* Better button styling */
-        .stButton>button {
-            background-color: #4e79a7 !important;
-            color: white !important;
+        .stButton>button {{
+            background-color: {COLOR_SYSTEM['PRIMARY']['MAIN']} !important;
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']} !important;
             border: none !important;
             font-weight: 600 !important;
             padding: 0.5em 1em !important;
             border-radius: 4px !important;
             transition: all 0.3s ease !important;
-        }
-        .stButton>button:hover {
-            background-color: #3A5980 !important;
+        }}
+        .stButton>button:hover {{
+            background-color: {COLOR_SYSTEM['PRIMARY']['DARK']} !important;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-        }
-        .stButton>button:active {
+        }}
+        .stButton>button:active {{
             transform: translateY(1px) !important;
-        }
+        }}
         
         /* Slider styling for better visibility */
-        .stSlider {
+        .stSlider {{
             padding-top: 0.5em;
             padding-bottom: 1em;
-        }
-        .stSlider > div > div {
+        }}
+        .stSlider > div > div {{
             background-color: rgba(78, 121, 167, 0.3) !important;
-        }
-        .stSlider > div > div > div > div {
-            background-color: #4e79a7 !important;
-        }
+        }}
+        .stSlider > div > div > div > div {{
+            background-color: {COLOR_SYSTEM['PRIMARY']['MAIN']} !important;
+        }}
         
         /* Table styling */
-        .dataframe {
-            border: 1px solid #333333 !important;
-        }
-        .dataframe th {
-            background-color: #1E2130 !important;
-            color: #FFFFFF !important;
+        .dataframe {{
+            border: 1px solid {COLOR_SYSTEM['NEUTRAL']['DARKER']} !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            border-radius: 4px !important;
+            overflow: hidden !important;
+        }}
+        .dataframe th {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']} !important;
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']} !important;
             font-weight: 600 !important;
-            border: 1px solid #333333 !important;
-        }
-        .dataframe td {
-            background-color: #111111 !important;
-            color: #DDDDDD !important;
-            border: 1px solid #333333 !important;
-        }
+            border: 1px solid {COLOR_SYSTEM['NEUTRAL']['DARKER']} !important;
+            padding: 0.75rem !important;
+            text-align: left !important;
+        }}
+        .dataframe td {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['BLACK']} !important;
+            color: {COLOR_SYSTEM['NEUTRAL']['LIGHTER']} !important;
+            border: 1px solid {COLOR_SYSTEM['NEUTRAL']['DARKER']} !important;
+            padding: 0.75rem !important;
+        }}
         
         /* Expander styling */
-        .streamlit-expanderHeader {
+        .streamlit-expanderHeader {{
             background-color: rgba(78, 121, 167, 0.1) !important;
             border-radius: 4px !important;
-        }
-        .streamlit-expanderHeader:hover {
+            font-weight: 600 !important;
+            color: {COLOR_SYSTEM['PRIMARY']['LIGHT']} !important;
+        }}
+        .streamlit-expanderHeader:hover {{
             background-color: rgba(78, 121, 167, 0.2) !important;
-        }
+        }}
         
         /* Radio button styling */
-        .stRadio > div {
-            background-color: #1E2130 !important;
+        .stRadio > div {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']} !important;
             border-radius: 4px !important;
             padding: 0.5em !important;
-        }
+        }}
         
         /* Custom class for dark cards */
-        .dark-card {
-            background-color: #1E2130;
+        .dark-card {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']};
             border-radius: 5px;
             padding: 1.5em;
             margin-bottom: 1em;
-            border-left: 4px solid #4e79a7;
-        }
+            border-left: 4px solid {COLOR_SYSTEM['PRIMARY']['MAIN']};
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }}
         
         /* Custom class for metric containers */
-        .metric-container {
+        .metric-container {{
             background-color: rgba(30, 33, 48, 0.7);
             border-radius: 5px;
-            padding: 1em;
+            padding: 1.2em;
             text-align: center;
-            border-bottom: 3px solid #4e79a7;
-        }
+            border-bottom: 3px solid {COLOR_SYSTEM['PRIMARY']['MAIN']};
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }}
+        
+        .metric-container:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }}
         
         /* Better select box styling */
-        .stSelectbox > div > div {
-            background-color: #1E2130 !important;
-            color: #FFFFFF !important;
-        }
+        .stSelectbox > div > div {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']} !important;
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']} !important;
+            border-radius: 4px !important;
+        }}
         
         /* Tab styling */
-        .stTabs [data-baseweb="tab-list"] {
+        .stTabs [data-baseweb="tab-list"] {{
             gap: 2px;
-        }
-        .stTabs [data-baseweb="tab"] {
-            background-color: #1E2130 !important;
-            color: #BBBBBB !important;
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']} !important;
+            color: {COLOR_SYSTEM['NEUTRAL']['LIGHT']} !important;
             padding: 10px 20px;
             border-radius: 4px 4px 0 0;
-        }
-        .stTabs [aria-selected="true"] {
-            background-color: #4e79a7 !important;
-            color: #FFFFFF !important;
-        }
+            font-weight: 500 !important;
+        }}
+        .stTabs [aria-selected="true"] {{
+            background-color: {COLOR_SYSTEM['PRIMARY']['MAIN']} !important;
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']} !important;
+            font-weight: 600 !important;
+        }}
         
         /* Tooltip styling */
-        .tooltip {
+        .tooltip {{
             position: relative;
             display: inline-block;
-            border-bottom: 1px dotted #BBBBBB;
-        }
-        .tooltip .tooltiptext {
+            border-bottom: 1px dotted {COLOR_SYSTEM['NEUTRAL']['LIGHT']};
+        }}
+        .tooltip .tooltiptext {{
             visibility: hidden;
             width: 120px;
-            background-color: #1E2130;
-            color: #FFFFFF;
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']};
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']};
             text-align: center;
             border-radius: 5px;
-            padding: 5px;
+            padding: 8px;
             position: absolute;
             z-index: 1;
             bottom: 125%;
@@ -209,28 +307,60 @@ def apply_custom_theme() -> None:
             margin-left: -60px;
             opacity: 0;
             transition: opacity 0.3s;
-        }
-        .tooltip:hover .tooltiptext {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            font-size: 0.9em;
+        }}
+        .tooltip:hover .tooltiptext {{
             visibility: visible;
             opacity: 1;
-        }
+        }}
         
         /* Chart area modifications */
-        .js-plotly-plot {
+        .js-plotly-plot {{
             background-color: transparent !important;
-        }
+            border-radius: 5px !important;
+            overflow: hidden !important;
+        }}
         
         /* Focus indicators for accessibility */
-        a:focus, button:focus, input:focus, select:focus, textarea:focus {
-            outline: 2px solid #7EB3FF !important;
+        a:focus, button:focus, input:focus, select:focus, textarea:focus {{
+            outline: 2px solid {COLOR_SYSTEM['PRIMARY']['LIGHT']} !important;
             outline-offset: 2px !important;
-        }
+        }}
         
         /* Better horizontal rule styling */
-        hr {
-            border-top: 1px solid #333333 !important;
+        hr {{
+            border-top: 1px solid {COLOR_SYSTEM['NEUTRAL']['DARKER']} !important;
             margin: 1.5em 0 !important;
-        }
+        }}
+        
+        /* Card-like containers */
+        .css-card {{
+            background-color: {COLOR_SYSTEM['NEUTRAL']['DARKEST']};
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            border-top: 3px solid {COLOR_SYSTEM['PRIMARY']['MAIN']};
+            transition: transform 0.2s ease;
+        }}
+        
+        .css-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }}
+        
+        /* Make links more visible */
+        a {{
+            color: {COLOR_SYSTEM['PRIMARY']['LIGHT']} !important;
+            text-decoration: none !important;
+            transition: color 0.2s !important;
+        }}
+        
+        a:hover {{
+            color: {COLOR_SYSTEM['PRIMARY']['CONTRAST']} !important;
+            text-decoration: underline !important;
+        }}
         </style>
         """, unsafe_allow_html=True)
         
