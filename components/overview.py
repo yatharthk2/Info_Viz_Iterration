@@ -26,6 +26,9 @@ from utils.visualization import (
 # Import theme utilities
 from utils.theme import create_section_header, format_value
 
+# Import quick insights utilities
+from utils.quick_insights import show_quick_insights
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -294,6 +297,13 @@ def show_overview(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
             3. **Trend Analysis**: The trend lines show how CPI typically scales with efficiency for each bid type,
                helping to identify optimal pricing points based on project parameters.
             """)
+        
+        # Quick Insights section
+        st.header("Quick Insights")
+        st.markdown("<hr style='margin-top: 0; background-color: #4e79a7; height: 2px'>", unsafe_allow_html=True)
+        
+        # Show Quick Insights button and functionality
+        show_quick_insights(won_data, lost_data, combined_data)
         
         # Recent trends section
         st.header("Project Volume Trends")
