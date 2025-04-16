@@ -145,14 +145,14 @@ def show_insights(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
                 xaxis_title="Segment",
                 yaxis=dict(
                     title="CPI ($)",
-                    titlefont=dict(color='white'),
+                    title_font=dict(color='white'),
                     tickfont=dict(color='white'),
                     gridcolor='rgba(255,255,255,0.1)',
                     tickprefix='$'
                 ),
                 yaxis2=dict(
                     title="% Difference",
-                    titlefont=dict(color=DARK_THEME_COLORS['highlight']),
+                    title_font=dict(color=DARK_THEME_COLORS['highlight']),
                     tickfont=dict(color=DARK_THEME_COLORS['highlight']),
                     anchor='x',
                     overlaying='y',
@@ -249,14 +249,14 @@ def show_insights(won_data: pd.DataFrame, lost_data: pd.DataFrame, combined_data
                 },
                 yaxis=dict(
                     title='CPI Gap ($)',
-                    titlefont=dict(color=DARK_THEME_COLORS['neutral']),
+                    title_font=dict(color=DARK_THEME_COLORS['neutral']),
                     tickfont=dict(color=DARK_THEME_COLORS['neutral']),
                     gridcolor='rgba(255,255,255,0.1)',
                     tickprefix='$'
                 ),
                 yaxis2=dict(
                     title='CPI Gap (%)',
-                    titlefont=dict(color=DARK_THEME_COLORS['highlight']),
+                    title_font=dict(color=DARK_THEME_COLORS['highlight']),
                     tickfont=dict(color=DARK_THEME_COLORS['highlight']),
                     anchor='x',
                     overlaying='y',
