@@ -15,29 +15,33 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Dark theme colors consistently applied across all visualizations
-DARK_THEME_COLORS = {
-    "background": "#111111",
-    "secondary_background": "#1E2130",
-    "primary": "#4e79a7",
-    "success": "#52BC9F",
-    "warning": "#F6C85F",
-    "error": "#E15759",
-    "text": "#FFFFFF",
-    "secondary_text": "#BBBBBB",
-    "highlight": "#7EB3FF",
-    "muted": "#555555",
-    "won": "#52BC9F",
-    "lost": "#E15759",
-    "neutral": "#7EB3FF",
-    "grid": "rgba(255, 255, 255, 0.1)",
-}
+# Import the color system from theme.py
+from utils.theme import COLOR_SYSTEM, DARK_THEME_COLORS
 
-# Color scales for consistent visualization
+# Add visualization-specific colors
+DARK_THEME_COLORS.update({
+    "grid": "rgba(255, 255, 255, 0.1)",
+    "neutral": COLOR_SYSTEM['PRIMARY']['LIGHT'],
+    "won": COLOR_SYSTEM['CHARTS']['WON'],
+    "lost": COLOR_SYSTEM['CHARTS']['LOST'],
+})
+
+# Enhanced color scales for consistent visualization
 COLOR_SCALES = {
-    "diverging": [[0, "#E15759"], [0.5, "#F6C85F"], [1, "#52BC9F"]],
-    "sequential": [[0, "#4e79a7"], [0.5, "#7EB3FF"], [1, "#52BC9F"]],
-    "sequential_red": [[0, "#E15759"], [0.5, "#F08B6E"], [1, "#F6C85F"]],
+    "diverging": [[0, COLOR_SYSTEM['ACCENT']['RED']], 
+                  [0.5, COLOR_SYSTEM['ACCENT']['YELLOW']], 
+                  [1, COLOR_SYSTEM['ACCENT']['GREEN']]],
+    
+    "sequential": [[0, COLOR_SYSTEM['PRIMARY']['DARK']], 
+                   [0.5, COLOR_SYSTEM['PRIMARY']['MAIN']], 
+                   [1, COLOR_SYSTEM['PRIMARY']['LIGHT']]],
+    
+    "sequential_red": [[0, COLOR_SYSTEM['ACCENT']['RED']], 
+                       [0.5, "#F08B6E"], 
+                       [1, COLOR_SYSTEM['ACCENT']['YELLOW']]],
+    
+    "won_lost": [[0, COLOR_SYSTEM['CHARTS']['WON']], 
+                 [1, COLOR_SYSTEM['CHARTS']['LOST']]],
 }
 
 def set_plotly_theme() -> None:
