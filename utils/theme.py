@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Union, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -369,8 +369,8 @@ def apply_custom_theme() -> None:
     except Exception as e:
         logger.error(f"Error applying custom theme: {e}", exc_info=True)
 
-def create_metric_card(title: str, value: Any, unit: str = "", delta: float = None, 
-                     interpret: str = None, help_text: str = None) -> None:
+def create_metric_card(title: str, value: Any, unit: str = "", delta: Optional[float] = None, 
+                     interpret: Optional[str] = None, help_text: Optional[str] = None) -> None:
     """
     Create a styled metric card for displaying important KPIs.
     
@@ -396,7 +396,7 @@ def create_metric_card(title: str, value: Any, unit: str = "", delta: float = No
     if help_text:
         st.caption(help_text)
 
-def create_section_header(title: str, description: str = None, icon: str = None) -> None:
+def create_section_header(title: str, description: Optional[str] = None, icon: Optional[str] = None) -> None:
     """
     Create a styled section header with optional description and icon.
     
@@ -437,3 +437,114 @@ def format_value(value: float, format_type: str = 'currency', precision: int = 2
     except Exception as e:
         logger.error(f"Error formatting value: {e}")
         return str(value)  # Fallback to string conversion
+
+def format_chart_for_dark_mode(fig, title: Optional[str] = None, height: int = 500) -> Any:
+    """
+    Format a Plotly chart for dark mode with consistent styling.
+    
+    Args:
+        fig: Plotly figure object
+        title (str, optional): Chart title. Defaults to None.
+        height (int, optional): Chart height in pixels. Defaults to 500.
+        
+    Returns:
+        Plotly figure with dark mode styling applied
+    """
+    fig.update_layout(
+        # Basic layout
+        template="plotly_dark",
+        height=height,
+        margin=dict(l=20, r=20, t=40, b=20),
+        
+        # Background colors
+        paper_bgcolor=COLOR_SYSTEM['NEUTRAL']['BLACK'],
+        plot_bgcolor='rgba(0,0,0,0)',
+        
+        # Title configuration
+        title=dict(
+            text=title if title else "",
+            font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=20,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            ),
+            x=0.01,
+            xanchor='left',
+            y=0.98,
+            yanchor='top'
+        ),
+        
+        # Font configuration for all text elements
+        font=dict(
+            family=TYPOGRAPHY['FONT_FAMILY'],
+            size=14,
+            color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+        ),
+        
+        # Legend configuration
+        legend=dict(
+            font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            ),
+            bgcolor='rgba(0,0,0,0.1)',
+            bordercolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+            borderwidth=1
+        ),
+        
+        # Axes configuration
+        xaxis=dict(
+            showgrid=True,
+            gridcolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+            gridwidth=1,
+            showline=True,
+            linecolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+            tickfont=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+            ),
+            title=dict(
+                font=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=13,
+                    color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                )
+            ),
+            zeroline=False
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+            gridwidth=1,
+            showline=True,
+            linecolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+            tickfont=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+            ),
+            title=dict(
+                font=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=13,
+                    color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                )
+            ),
+            zeroline=False
+        ),
+        
+        # Hoverlabel configuration
+        hoverlabel=dict(
+            bgcolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+            bordercolor=COLOR_SYSTEM['PRIMARY']['MAIN'],
+            font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            )
+        )
+    )
+    
+    return fig

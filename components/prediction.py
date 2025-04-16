@@ -9,6 +9,7 @@ import numpy as np
 import logging
 from typing import Dict, List, Tuple, Any, Optional
 import plotly.graph_objects as go
+from sklearn.model_selection import train_test_split
 
 # Import ML model utilities
 from models.trainer import build_models
@@ -37,6 +38,15 @@ from utils.explanation import (
 
 # Import data processing utilities
 from utils.data_processor import prepare_model_data
+
+# Import new model metrics utilities
+from utils.model_metrics import (
+    evaluate_model_performance,
+    plot_learning_curve,
+    create_residuals_plot,
+    create_feature_dependence_plot,
+    create_model_comparison_chart
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -95,9 +105,20 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                 st.warning("Failed to prepare model data. Please check your dataset for missing values or data format issues.")
                 return
             
+            # Split data for model evaluation
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            
             # Build models with option for advanced tuning
             do_tuning = st.sidebar.checkbox("Use advanced model tuning (slower but more accurate)", value=False)
             trained_models, model_scores, feature_importance = build_models(X, y, do_tuning)
+            
+            # Store split data for advanced model evaluation
+            model_evaluation_data = {
+                'X_train': X_train,
+                'X_test': X_test,
+                'y_train': y_train,
+                'y_test': y_test
+            }
         
         # Toggle for advanced model details
         show_advanced = st.sidebar.checkbox("Show advanced model details", value=False)
