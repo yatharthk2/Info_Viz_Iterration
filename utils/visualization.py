@@ -15,8 +15,8 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Import the color system from theme.py
-from utils.theme import COLOR_SYSTEM, DARK_THEME_COLORS
+# Import the color system and typography from theme.py
+from utils.theme import COLOR_SYSTEM, DARK_THEME_COLORS, TYPOGRAPHY
 
 # Add visualization-specific colors
 DARK_THEME_COLORS.update({
@@ -47,48 +47,116 @@ COLOR_SCALES = {
 def set_plotly_theme() -> None:
     """
     Set global Plotly theme settings for consistent styling across all visualizations.
-    Optimized for dark background with high-contrast elements.
+    Optimized for dark background with high-contrast elements using the professional
+    color system and typography.
     """
     import plotly.io as pio
     
     pio.templates.default = "plotly_dark"
     
-    # Customize the dark template further
+    # Customize the dark template further with enhanced styling
     template = pio.templates["plotly_dark"]
     template.layout.update(
-        paper_bgcolor=DARK_THEME_COLORS["background"],
-        plot_bgcolor=DARK_THEME_COLORS["background"],
+        # Background colors
+        paper_bgcolor=COLOR_SYSTEM['NEUTRAL']['BLACK'],
+        plot_bgcolor=COLOR_SYSTEM['NEUTRAL']['BLACK'],
+        
+        # Font settings
         font=dict(
-            family="Arial, sans-serif",
+            family=TYPOGRAPHY['FONT_FAMILY'],
             size=14,
-            color=DARK_THEME_COLORS["text"]
+            color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
         ),
+        
+        # Title settings
         title=dict(
             font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
                 size=20,
-                color=DARK_THEME_COLORS["text"]
-            )
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            ),
+            x=0.5,
+            xanchor='center'
         ),
+        
+        # Legend settings
         legend=dict(
-            bgcolor="rgba(0,0,0,0.2)",
-            bordercolor=DARK_THEME_COLORS["muted"],
+            bgcolor=COLOR_SYSTEM['NEUTRAL']['DARKEST'],
+            bordercolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
             borderwidth=1,
             font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
                 size=12,
-                color=DARK_THEME_COLORS["text"]
-            )
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            ),
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='center',
+            x=0.5
         ),
+        
+        # Axis settings
         xaxis=dict(
             gridcolor=DARK_THEME_COLORS["grid"],
-            zerolinecolor=DARK_THEME_COLORS["grid"]
+            zerolinecolor=DARK_THEME_COLORS["grid"],
+            title_font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=14,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            ),
+            tickfont=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+            )
         ),
         yaxis=dict(
             gridcolor=DARK_THEME_COLORS["grid"],
-            zerolinecolor=DARK_THEME_COLORS["grid"]
+            zerolinecolor=DARK_THEME_COLORS["grid"],
+            title_font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=14,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            ),
+            tickfont=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+            )
         ),
+        
+        # Other layout settings
         margin=dict(t=60, l=40, r=40, b=60),
         autosize=True,
-        hovermode="closest"
+        hovermode="closest",
+        hoverlabel=dict(
+            bgcolor=COLOR_SYSTEM['NEUTRAL']['DARKEST'],
+            bordercolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+            font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            )
+        ),
+        
+        # Color axis settings for heatmaps
+        coloraxis=dict(
+            colorbar=dict(
+                title_font=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=14,
+                    color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                ),
+                tickfont=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=12,
+                    color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+                ),
+                outlinecolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+                outlinewidth=1
+            )
+        )
     )
 
 def create_type_distribution_chart(data: pd.DataFrame) -> go.Figure:
@@ -110,15 +178,15 @@ def create_type_distribution_chart(data: pd.DataFrame) -> go.Figure:
         total = type_counts['Count'].sum()
         type_counts['Percentage'] = type_counts['Count'] / total * 100
         
-        # Create custom text
+        # Create custom text with improved readability
         type_counts['Text'] = type_counts.apply(
             lambda x: f"{x['Type']}: {x['Count']} ({x['Percentage']:.1f}%)", axis=1)
         
-        # Create color map based on Type
-        colors = [DARK_THEME_COLORS['won'] if t == 'Won' else DARK_THEME_COLORS['lost'] 
+        # Create color map based on Type using our enhanced color system
+        colors = [COLOR_SYSTEM['CHARTS']['WON'] if t == 'Won' else COLOR_SYSTEM['CHARTS']['LOST'] 
                  for t in type_counts['Type']]
         
-        # Create pie chart with Plotly
+        # Create pie chart with Plotly with enhanced styling
         fig = go.Figure(data=[go.Pie(
             labels=type_counts['Type'],
             values=type_counts['Count'],
@@ -127,42 +195,34 @@ def create_type_distribution_chart(data: pd.DataFrame) -> go.Figure:
             textinfo='text',
             marker=dict(
                 colors=colors,
-                line=dict(color='rgba(255,255,255,0.3)', width=2)
+                line=dict(
+                    color=COLOR_SYSTEM['NEUTRAL']['DARKER'], 
+                    width=2
+                )
+            ),
+            textfont=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=14,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
             ),
             hole=0.4,
         )])
         
-        # Add title and styling
-        fig.update_layout(
-            title={
-                'text': 'Distribution of Won vs Lost Bids',
-                'font': {'size': 20, 'color': 'white'},
-                'y': 0.95,
-                'x': 0.5,
-                'xanchor': 'center',
-                'yanchor': 'top'
-            },
-            legend=dict(
-                font=dict(color='white', size=12),
-                orientation='h',
-                yanchor='bottom',
-                y=1.02,
-                xanchor='center',
-                x=0.5,
-                bgcolor='rgba(0,0,0,0.2)',
-                bordercolor='rgba(255,255,255,0.3)',
-                borderwidth=1
+        # Format chart using our enhanced styling
+        fig = format_chart_for_dark_mode(fig, 'Distribution of Won vs Lost Bids', height=400)
+        
+        # Add center annotation with total bids
+        fig.add_annotation(
+            text=f'Total Bids:<br><b>{total}</b>',
+            x=0.5, y=0.5,
+            font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=14, 
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
             ),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            height=400,
-            annotations=[dict(
-                text='Total Bids:<br><b>' + str(total) + '</b>',
-                x=0.5, y=0.5,
-                font=dict(size=14, color='white'),
-                showarrow=False
-            )]
+            showarrow=False,
+            xanchor='center',
+            yanchor='middle'
         )
         
         return fig
@@ -171,11 +231,7 @@ def create_type_distribution_chart(data: pd.DataFrame) -> go.Figure:
         logger.error(f"Error creating type distribution chart: {e}", exc_info=True)
         # Return a minimal figure if error occurs
         fig = go.Figure()
-        fig.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            height=400
-        )
+        fig = format_chart_for_dark_mode(fig, height=400)
         return fig
 
 def create_cpi_distribution_boxplot(won_data: pd.DataFrame, lost_data: pd.DataFrame) -> go.Figure:
@@ -1913,29 +1969,93 @@ def create_cpi_efficiency_chart(won_data: pd.DataFrame, lost_data: pd.DataFrame)
         )
         return fig
 
-def format_chart_for_dark_mode(fig: go.Figure) -> go.Figure:
+def format_chart_for_dark_mode(fig: go.Figure, title: str = None, height: int = 500) -> go.Figure:
     """
-    Format a Plotly chart for better visibility in dark mode.
+    Format a Plotly chart for enhanced visibility in dark mode with professional styling.
     
     Args:
         fig (go.Figure): Input Plotly figure
+        title (str, optional): Chart title. If None, keeps existing title. Defaults to None.
+        height (int, optional): Chart height in pixels. Defaults to 500.
         
     Returns:
         go.Figure: Formatted figure with dark mode styling
     """
     try:
-        # Update the overall layout
+        # Get current title if title parameter is not provided
+        if title is None and fig.layout.title is not None:
+            title = fig.layout.title.text
+
+        # Update the overall layout with enhanced styling
         fig.update_layout(
+            # Background colors
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
+            
+            # Font settings
+            font=dict(
+                family=TYPOGRAPHY['FONT_FAMILY'],
+                size=12,
+                color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+            ),
+            
+            # Title settings
+            title=dict(
+                text=title,
+                font=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=20, 
+                    color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                ),
+                x=0.5,
+                xanchor='center',
+                y=0.95,
+                yanchor='top'
+            ) if title else None,
+            
+            # Axis settings
             xaxis=dict(
-                gridcolor='rgba(255,255,255,0.1)',
-                zerolinecolor='rgba(255,255,255,0.1)'
+                gridcolor=DARK_THEME_COLORS['grid'],
+                zerolinecolor=DARK_THEME_COLORS['grid'],
+                title_font=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=14,
+                    color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                ),
+                tickfont=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=12,
+                    color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+                )
             ),
             yaxis=dict(
-                gridcolor='rgba(255,255,255,0.1)',
-                zerolinecolor='rgba(255,255,255,0.1)'
+                gridcolor=DARK_THEME_COLORS['grid'],
+                zerolinecolor=DARK_THEME_COLORS['grid'],
+                title_font=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=14,
+                    color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                ),
+                tickfont=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=12,
+                    color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+                )
+            ),
+            
+            # Set dimensions
+            height=height,
+            
+            # Hover behavior
+            hovermode='closest',
+            hoverlabel=dict(
+                bgcolor=COLOR_SYSTEM['NEUTRAL']['DARKEST'],
+                bordercolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+                font=dict(
+                    family=TYPOGRAPHY['FONT_FAMILY'],
+                    size=12,
+                    color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                )
             )
         )
         
@@ -1943,8 +2063,18 @@ def format_chart_for_dark_mode(fig: go.Figure) -> go.Figure:
         if 'yaxis2' in fig.layout:
             fig.update_layout(
                 yaxis2=dict(
-                    gridcolor='rgba(255,255,255,0.1)',
-                    zerolinecolor='rgba(255,255,255,0.1)'
+                    gridcolor=DARK_THEME_COLORS['grid'],
+                    zerolinecolor=DARK_THEME_COLORS['grid'],
+                    title_font=dict(
+                        family=TYPOGRAPHY['FONT_FAMILY'],
+                        size=14,
+                        color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                    ),
+                    tickfont=dict(
+                        family=TYPOGRAPHY['FONT_FAMILY'],
+                        size=12,
+                        color=COLOR_SYSTEM['NEUTRAL']['LIGHT']
+                    )
                 )
             )
         
@@ -1952,10 +2082,19 @@ def format_chart_for_dark_mode(fig: go.Figure) -> go.Figure:
         if 'legend' in fig.layout:
             fig.update_layout(
                 legend=dict(
-                    font=dict(color='white'),
+                    font=dict(
+                        family=TYPOGRAPHY['FONT_FAMILY'],
+                        size=12,
+                        color=COLOR_SYSTEM['PRIMARY']['CONTRAST']
+                    ),
                     bgcolor='rgba(0,0,0,0.2)',
-                    bordercolor='rgba(255,255,255,0.3)',
-                    borderwidth=1
+                    bordercolor=COLOR_SYSTEM['NEUTRAL']['DARKER'],
+                    borderwidth=1,
+                    orientation='h',
+                    yanchor='bottom',
+                    y=1.02,
+                    xanchor='center',
+                    x=0.5
                 )
             )
         
