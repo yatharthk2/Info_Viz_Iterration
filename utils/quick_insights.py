@@ -64,12 +64,12 @@ def identify_key_segments(data: pd.DataFrame) -> Tuple[str, float]:
         segments = data.groupby(['IR_Bin', 'LOI_Bin']).agg({
             'Type': lambda x: (x == 'Won').mean(),
             'CPI': 'median',
-            'ID': 'count'
+            'CPI': lambda x: len(x)  # Count using CPI column since ID might not exist
         }).reset_index()
         
         # Filter to segments with at least 5% of data
         min_count = len(data) * 0.05
-        segments = segments[segments['ID'] >= min_count]
+        segments = segments[segments['CPI'] >= min_count]
         
         # Sort by win rate
         segments = segments.sort_values('Type', ascending=False)
@@ -85,12 +85,12 @@ def identify_key_segments(data: pd.DataFrame) -> Tuple[str, float]:
     segments = data.groupby('IR_Bin').agg({
         'Type': lambda x: (x == 'Won').mean(),
         'CPI': 'median',
-        'ID': 'count'
+        'CPI': lambda x: len(x)  # Count using CPI column since ID might not exist
     }).reset_index()
     
     # Filter to segments with at least 5% of data
     min_count = len(data) * 0.05
-    segments = segments[segments['ID'] >= min_count]
+    segments = segments[segments['CPI'] >= min_count]
     
     # Sort by win rate
     segments = segments.sort_values('Type', ascending=False)
