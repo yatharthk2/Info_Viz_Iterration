@@ -23,6 +23,9 @@ from data_processor import load_data, clean_data, engineer_features
 # Import theme utilities
 from utils.theme import apply_custom_theme
 
+# Import data quality analysis utilities
+from utils.data_quality import show_data_analysis
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -47,7 +50,7 @@ def main():
         # Add app info and selection
         page = st.sidebar.radio(
             "Select Section:",
-            ["Overview", "CPI Prediction", "Insights & Recommendations"]
+            ["Overview", "CPI Prediction", "Insights & Recommendations", "Data Analysis"]
         )
         
         # Sidebar filters
@@ -65,6 +68,7 @@ def main():
             - **Overview**: High-level analysis of CPI patterns
             - **CPI Prediction**: ML-based price prediction tool
             - **Insights**: Strategic recommendations
+            - **Data Analysis**: Comprehensive data quality assessment and feature engineering
             
             Data is filtered by default to remove extreme outliers.
             """)
@@ -120,6 +124,8 @@ def main():
             show_prediction(combined_data_engineered, won_data, lost_data)
         elif page == "Insights & Recommendations":
             show_insights(won_data, lost_data, combined_data)
+        elif page == "Data Analysis":
+            show_data_analysis(won_data, lost_data, combined_data)
     
     except Exception as e:
         logger.error(f"Application error: {e}", exc_info=True)
