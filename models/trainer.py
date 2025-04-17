@@ -358,7 +358,7 @@ def build_models_with_tuning(X_train: pd.DataFrame, y_train: pd.Series,
     X_test_scaled = scaler.transform(X_test)
     
     # Train models with hyperparameter tuning - limit to fewer models for efficiency
-    tuning_models = ['Ridge Regression', 'Random Forest', 'Gradient Boosting']
+    tuning_models = ['Ridge Regression', 'ElasticNet', 'Random Forest', 'Gradient Boosting']
     
     for name in tuning_models:
         if name in MODEL_CONFIGS:
@@ -567,8 +567,9 @@ def cross_validate_models(X: pd.DataFrame, y: pd.Series,
         if models is None:
             models = {
                 'Ridge Regression': Ridge(alpha=1.0, random_state=42),
-                'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42),
-                'Gradient Boosting': GradientBoostingRegressor(n_estimators=100, random_state=42)
+                'ElasticNet': ElasticNet(alpha=0.1, l1_ratio=0.5, random_state=42, max_iter=2000),
+                'Random Forest': RandomForestRegressor(n_estimators=150, random_state=42, n_jobs=-1),
+                'Gradient Boosting': GradientBoostingRegressor(n_estimators=150, random_state=42)
             }
         
         # Scale features
