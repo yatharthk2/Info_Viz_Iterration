@@ -258,16 +258,17 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                         )
                         st.plotly_chart(residuals_fig, use_container_width=True)
                         
-                        # Add explanation for residuals plot
-                        with st.expander("📈 How to interpret residuals?"):
-                            st.markdown("""
-                            **Residuals** are the differences between actual and predicted values.
-                            
-                            - **Scattered randomly**: Good model fit (desired)
-                            - **Pattern/trend**: Model may be missing important factors
-                            - **Points far from zero**: Potential outliers or poor predictions
-                            - **More points above/below zero**: Model may be biased
-                            """)
+                        # Add explanation for residuals plot - Using text format instead of expander to avoid nesting
+                        st.markdown("""
+                        ### 📈 How to interpret residuals
+                        
+                        **Residuals** are the differences between actual and predicted values.
+                        
+                        - **Scattered randomly**: Good model fit (desired)
+                        - **Pattern/trend**: Model may be missing important factors
+                        - **Points far from zero**: Potential outliers or poor predictions
+                        - **More points above/below zero**: Model may be biased
+                        """)
                     else:
                         st.warning("Model diagnostics not available. Please train models first.")
                         
@@ -360,25 +361,25 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                 """)
                 
                 # Add interpretation
-                with st.expander("📊 Interpreting Feature Importance"):
-                    st.markdown("""
-                    ### Understanding Feature Importance
-                    
-                    Feature importance shows which factors have the strongest influence on CPI in our model.
-                    Longer bars indicate more significant impact on the predicted price.
-                    
-                    ### Key Insights
-                    
-                    1. **Primary Drivers**: The top features have the strongest influence on CPI predictions.
-                       These should be your primary focus when estimating prices.
-                    
-                    2. **Relative Importance**: The values represent the relative importance of each feature
-                       compared to others. For example, a feature with 0.4 importance has twice the influence
-                       of a feature with 0.2 importance.
-                    
-                    3. **Strategic Focus**: When negotiating or adjusting bids, focus on the top features
-                       as they will have the largest impact on competitive pricing.
-                    """)
+                # Using styled markdown instead of nested expander
+                st.markdown("""
+                ### 📊 Interpreting Feature Importance
+                
+                Feature importance shows which factors have the strongest influence on CPI in our model.
+                Longer bars indicate more significant impact on the predicted price.
+                
+                ### Key Insights
+                
+                1. **Primary Drivers**: The top features have the strongest influence on CPI predictions.
+                   These should be your primary focus when estimating prices.
+                
+                2. **Relative Importance**: The values represent the relative importance of each feature
+                   compared to others. For example, a feature with 0.4 importance has twice the influence
+                   of a feature with 0.2 importance.
+                
+                3. **Strategic Focus**: When negotiating or adjusting bids, focus on the top features
+                   as they will have the largest impact on competitive pricing.
+                """)
             else:
                 st.warning("Feature importance analysis is not available. This may be due to the model type or insufficient data.")
         
