@@ -5,7 +5,7 @@ A sophisticated Streamlit dashboard for predictive pricing analysis in market re
 ## Features
 
 - **Interactive Analytics**: Explore CPI trends across different market segments with dynamic visualizations
-- **Predictive Pricing**: Machine learning models that predict optimal CPI based on project specifications
+- **Predictive Pricing**: Advanced machine learning models including Ridge, ElasticNet, Random Forest, and Gradient Boosting to predict optimal CPI based on project specifications
 - **Strategic Insights**: Data-driven recommendations for pricing strategy optimization
 - **Data Quality Analysis**: Comprehensive tools for data validation and outlier detection
 - **Advanced Model Metrics**: Learning curves, residual analysis, and feature importance for model explainability
@@ -28,7 +28,10 @@ A sophisticated Streamlit dashboard for predictive pricing analysis in market re
 - **Framework**: Streamlit
 - **Data Processing**: Pandas, NumPy
 - **Visualization**: Plotly
-- **Machine Learning**: Scikit-learn
+- **Machine Learning**: 
+  - Scikit-learn (Ridge, ElasticNet, Random Forest, Gradient Boosting)
+  - Advanced feature engineering (polynomial features, interaction terms)
+  - Hyperparameter optimization
 - **Data Sources**: Excel processing with OpenpyXL
 
 ## Getting Started

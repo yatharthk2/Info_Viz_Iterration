@@ -1495,9 +1495,11 @@ def get_detailed_pricing_strategy(predicted_cpi: float, user_input: Dict[str, fl
 **Purpose**: Trains machine learning models for CPI prediction.
 
 **Key Functions**:
-- `train_models()`: Trains multiple model types for CPI prediction
+- `train_models()`: Trains multiple model types for CPI prediction (Ridge, ElasticNet, Random Forest, Gradient Boosting)
 - `evaluate_models()`: Evaluates model performance using cross-validation
 - `select_best_model()`: Selects the best performing model
+- `cross_validate_models()`: Performs cross-validation with multiple performance metrics
+- `evaluate_model_assumptions()`: Checks regression model assumptions for better explainability
 - `save_models()`: Saves trained models for later use
 
 **Detailed Functions**:
