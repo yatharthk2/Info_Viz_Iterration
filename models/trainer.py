@@ -197,12 +197,42 @@ def build_models_default(X_train: pd.DataFrame, y_train: pd.Series,
     trained_models = {}
     model_scores = {}
     
-    # Define models to train
+    # Define models to train with optimized parameters for CPI prediction
     models = {
-        'Ridge Regression': Ridge(alpha=1.0, random_state=42, solver='lsqr'),
-        'Huber Regression': HuberRegressor(alpha=0.01, epsilon=1.35),
-        'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42),
-        'Gradient Boosting': GradientBoostingRegressor(n_estimators=100, random_state=42)
+        'Ridge Regression': Ridge(
+            alpha=1.0, 
+            random_state=42, 
+            solver='lsqr',
+            fit_intercept=True,
+            max_iter=2000
+        ),
+        'Huber Regression': HuberRegressor(
+            alpha=0.01, 
+            epsilon=1.35,
+            max_iter=500,
+            fit_intercept=True,
+            tol=1e-5
+        ),
+        'Random Forest': RandomForestRegressor(
+            n_estimators=150,  # More trees for better performance
+            max_depth=15,      # Deeper trees to capture complex relationships
+            min_samples_split=5,
+            min_samples_leaf=2,
+            max_features='sqrt',
+            bootstrap=True,
+            random_state=42,
+            n_jobs=-1  # Use all available cores
+        ),
+        'Gradient Boosting': GradientBoostingRegressor(
+            n_estimators=150,
+            learning_rate=0.1,
+            max_depth=7,
+            min_samples_split=5,
+            min_samples_leaf=2,
+            subsample=0.8,
+            max_features='sqrt',
+            random_state=42
+        )
     }
     
     # Use a scaler to avoid numerical issues

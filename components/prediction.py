@@ -978,7 +978,9 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                     # Calculate top factors
                     top_factors = []
                     if not feature_importance.empty:
-                        top_factors = feature_importance.head(5)[['Feature', 'Importance']].values
+                        # Convert DataFrame values to list of tuples (feature, importance)
+                        top_factors = [(str(row[0]), float(row[1])) 
+                                      for row in feature_importance.head(5)[['Feature', 'Importance']].values]
                     
                     # Generate explanation of factors
                     factor_explanation = explain_prediction_factors(avg_prediction, user_input, top_factors)
