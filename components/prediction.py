@@ -176,9 +176,11 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                     # Create a more detailed table of metrics
                     metrics_display = []
                     for model_name, metrics in model_scores.items():
+                        # Create a new dict with the model name and all metrics
                         metrics_row = {'Model': model_name}
-                        # Use dictionary comprehension to ensure correct type conversion
-                        metrics_row.update({k: v for k, v in metrics.items()})
+                        # Use items to properly convert keys and values
+                        for k, v in metrics.items():
+                            metrics_row[k] = v
                         metrics_display.append(metrics_row)
                     
                     if metrics_display:
@@ -717,20 +719,22 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                         if fig:
                             st.plotly_chart(fig, use_container_width=True)
                             
-                            with st.expander("📊 How to use this chart"):
-                                st.markdown("""
-                                This chart shows how win probability changes at different price points:
-                                
-                                - **Horizontal Axis**: CPI price points from lowest to highest
-                                - **Vertical Axis**: Estimated win probability at each price
-                                - **White Dot**: Your current predicted price point
-                                
-                                **Strategic Use**: 
-                                
-                                Use this chart to evaluate trade-offs between win probability and profitability.
-                                Moving left increases your chances of winning but may reduce profit margins, while
-                                moving right increases your potential profit but reduces win probability.
-                                """)
+                            # Using markdown instead of nested expander
+                            st.markdown("""
+                            ### 📊 How to use this chart
+                            
+                            This chart shows how win probability changes at different price points:
+                            
+                            - **Horizontal Axis**: CPI price points from lowest to highest
+                            - **Vertical Axis**: Estimated win probability at each price
+                            - **White Dot**: Your current predicted price point
+                            
+                            **Strategic Use**: 
+                            
+                            Use this chart to evaluate trade-offs between win probability and profitability.
+                            Moving left increases your chances of winning but may reduce profit margins, while
+                            moving right increases your potential profit but reduces win probability.
+                            """)
                 
                 # Detailed pricing strategy with enhanced visualization
                 st.subheader("Detailed Pricing Strategy")
@@ -863,8 +867,8 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                             
                             st.plotly_chart(fig, use_container_width=True)
                             
-                            # Show similar projects data table
-                            with st.expander("View Similar Won Projects Data"):
+                            # Show similar projects data table - Using button instead of nested expander
+                            if st.button("View Similar Won Projects Data", key="view_won_data"):
                                 st.dataframe(similar_won[['IR', 'LOI', 'Completes', 'CPI']], use_container_width=True)
                         else:
                             st.info("No similar won projects found with the specified parameters.")
@@ -967,8 +971,8 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                             
                             st.plotly_chart(fig, use_container_width=True)
                             
-                            # Show similar projects data table
-                            with st.expander("View Similar Lost Projects Data"):
+                            # Show similar projects data table - Using button instead of nested expander
+                            if st.button("View Similar Lost Projects Data", key="view_lost_data"):
                                 st.dataframe(similar_lost[['IR', 'LOI', 'Completes', 'CPI']], use_container_width=True)
                         else:
                             st.info("No similar lost projects found with the specified parameters.")
@@ -983,20 +987,21 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                     factor_explanation = explain_prediction_factors(avg_prediction, user_input, top_factors)
                     st.markdown(factor_explanation)
                     
-                    # Add interactive elements for what-if scenarios
-                    with st.expander("What if scenarios"):
-                        st.markdown("""
-                        Explore how changing each parameter would affect your predicted CPI:
-                        
-                        - **Lower IR**: Would likely increase your CPI
-                        - **Higher IR**: Would likely decrease your CPI
-                        - **Shorter LOI**: Would likely decrease your CPI
-                        - **Longer LOI**: Would likely increase your CPI
-                        - **Smaller Sample**: Would likely increase your per-unit CPI
-                        - **Larger Sample**: Would likely decrease your per-unit CPI
-                        
-                        Try different values in the sliders above and click "Predict CPI" again to see how changes affect the prediction.
-                        """)
+                    # Add what-if scenarios as regular text - avoiding nested expander
+                    st.markdown("""
+                    ### 🔍 What-if scenarios
+                    
+                    Explore how changing each parameter would affect your predicted CPI:
+                    
+                    - **Lower IR**: Would likely increase your CPI
+                    - **Higher IR**: Would likely decrease your CPI
+                    - **Shorter LOI**: Would likely decrease your CPI
+                    - **Longer LOI**: Would likely increase your CPI
+                    - **Smaller Sample**: Would likely increase your per-unit CPI
+                    - **Larger Sample**: Would likely decrease your per-unit CPI
+                    
+                    Try different values in the sliders above and click "Predict CPI" again to see how changes affect the prediction.
+                    """)
                 
                 # Footer with final advice
                 st.markdown("""
