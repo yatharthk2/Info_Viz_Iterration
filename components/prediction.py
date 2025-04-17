@@ -294,13 +294,10 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
                         
                         # Select key features to analyze based on feature importance
                         key_features = []
-                        if len(feature_importance) > 0:
-                            top_features = sorted(
-                                [(feat, imp) for feat, imp in feature_importance.items()],
-                                key=lambda x: x[1],
-                                reverse=True
-                            )[:3]  # Get top 3 features
-                            key_features = [feat for feat, _ in top_features]
+                        if not feature_importance.empty:
+                            # Use pandas dataframe directly - it's already sorted
+                            top_features = feature_importance.head(3).values
+                            key_features = [str(feat) for feat, _ in top_features]
                         else:
                             # Default to basic features if no feature importance available
                             key_features = ['IR', 'LOI', 'Completes']
@@ -343,7 +340,7 @@ def show_prediction(combined_data_engineered: pd.DataFrame, won_data: pd.DataFra
             # Show enhanced feature importance visualization
             st.header("Feature Importance Analysis")
             
-            if len(feature_importance) > 0:
+            if not feature_importance.empty:
                 # Create enhanced feature importance chart
                 fig = explain_feature_importance(feature_importance, num_features=10)
                 if fig:
