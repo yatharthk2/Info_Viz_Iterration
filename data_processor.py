@@ -395,7 +395,7 @@ def clean_data(data: pd.DataFrame, filter_extremes: bool = True) -> pd.DataFrame
 
 def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Perform feature engineering for model training.
+    Perform advanced feature engineering for model training to improve CPI prediction accuracy.
     
     Args:
         data (pd.DataFrame): Cleaned data DataFrame
@@ -407,24 +407,60 @@ def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
         # Create a copy of the data to avoid modifying the original
         engineered_data = data.copy()
         
-        # Create interaction features
+        # Create basic ratio features (with safe division)
         engineered_data['IR_LOI_Ratio'] = engineered_data['IR'] / engineered_data['LOI'].replace(0, 0.1)
         engineered_data['IR_Completes_Ratio'] = engineered_data['IR'] / engineered_data['Completes'].replace(0, 1)
         engineered_data['LOI_Completes_Ratio'] = engineered_data['LOI'] / engineered_data['Completes'].replace(0, 1)
         
-        # Create polynomial features
+        # Create per-respondent metrics
+        engineered_data['CPI_per_Respondent'] = engineered_data['CPI'] * engineered_data['IR'] / 100
+        
+        # Create polynomial features - including cubic terms for more flexibility
         engineered_data['IR_Squared'] = engineered_data['IR'] ** 2
+        engineered_data['IR_Cubed'] = engineered_data['IR'] ** 3
         engineered_data['LOI_Squared'] = engineered_data['LOI'] ** 2
+        engineered_data['LOI_Cubed'] = engineered_data['LOI'] ** 3
+        engineered_data['Completes_Squared'] = engineered_data['Completes'] ** 2
         
-        # Create log transforms for skewed variables
+        # Log transforms (help linearize relationships)
         engineered_data['Log_Completes'] = np.log1p(engineered_data['Completes'])
+        engineered_data['Log_IR'] = np.log1p(engineered_data['IR'])
+        engineered_data['Log_LOI'] = np.log1p(engineered_data['LOI'])
         
-        # Create interaction terms
+        # Advanced interaction terms
         engineered_data['IR_LOI_Product'] = engineered_data['IR'] * engineered_data['LOI']
         engineered_data['Log_IR_LOI_Product'] = np.log1p(engineered_data['IR_LOI_Product'])
+        engineered_data['IR_Completes_Product'] = engineered_data['IR'] * engineered_data['Completes']
+        engineered_data['LOI_Completes_Product'] = engineered_data['LOI'] * engineered_data['Completes']
         
-        # Calculate derived metrics
+        # Create binned features (more robust to outliers)
+        for col, bins in [('IR', 5), ('LOI', 5), ('Completes', 5)]:
+            try:
+                engineered_data[f'{col}_Bin'] = pd.qcut(engineered_data[col], bins, 
+                                                       labels=False, duplicates='drop')
+                engineered_data[f'{col}_Bin'] = engineered_data[f'{col}_Bin'].astype(float)
+            except Exception as bin_error:
+                logger.warning(f"Could not create bins for {col}: {bin_error}")
+        
+        # Calculate derived metrics related to CPI
         engineered_data['CPI_per_Minute'] = engineered_data['CPI'] / engineered_data['LOI'].replace(0, 0.1)
+        engineered_data['CPI_per_Sample'] = engineered_data['CPI'] / np.sqrt(engineered_data['Completes'].replace(0, 1))
+        
+        # Create complexity metric (combination of IR, LOI and Completes)
+        engineered_data['Complexity_Score'] = (
+            (100 - engineered_data['IR']) / 100 * 
+            engineered_data['LOI'] / 10 * 
+            np.log1p(engineered_data['Completes']) / 5
+        )
+        
+        # Relative difficulty indicators (comparing to median values)
+        ir_median = engineered_data['IR'].median()
+        loi_median = engineered_data['LOI'].median()
+        completes_median = engineered_data['Completes'].median()
+        
+        engineered_data['IR_Difficulty'] = (ir_median / engineered_data['IR'].replace(0, 0.1)).clip(0, 10)
+        engineered_data['LOI_Difficulty'] = (engineered_data['LOI'] / loi_median).clip(0, 10)
+        engineered_data['Completes_Difficulty'] = (engineered_data['Completes'] / completes_median).clip(0, 10)
         
         # One-hot encode categorical variables
         engineered_data = pd.get_dummies(engineered_data, columns=['Type'], prefix=['Type'])
@@ -437,8 +473,12 @@ def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
         if 'Type_Lost' not in engineered_data.columns:
             engineered_data['Type_Lost'] = 0
         
+        # Log normal transformation of CPI for potential target transformation
+        # (will not be used in prediction, but helpful for modeling)
+        engineered_data['Log_CPI'] = np.log1p(engineered_data['CPI'])
+        
         return engineered_data
-    
+        
     except Exception as e:
         logger.error(f"Error engineering features: {e}", exc_info=True)
         # Return the original data if feature engineering fails

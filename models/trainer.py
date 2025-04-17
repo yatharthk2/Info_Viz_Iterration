@@ -8,7 +8,7 @@ import numpy as np
 import traceback
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression, Ridge, Lasso, HuberRegressor, RANSACRegressor
+from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet, HuberRegressor, RANSACRegressor
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.pipeline import Pipeline
@@ -30,52 +30,64 @@ MODEL_CONFIGS = {
     'Linear Regression': {
         'model': LinearRegression(),
         'params': {
-            'fit_intercept': [True, False],
-            'positive': [True, False]
+            'fit_intercept': [True],  # True almost always performs better for CPI
+            'positive': [False, True]  # Try constraining to positive coefficients
         }
     },
     'Ridge Regression': {
-        'model': Ridge(random_state=42),
+        'model': Ridge(random_state=42, max_iter=2000),  # Increase max_iter for convergence
         'params': {
-            'alpha': [0.01, 0.1, 1.0, 10.0, 100.0],
-            'fit_intercept': [True, False],
-            'solver': ['auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga']
+            'alpha': [0.001, 0.01, 0.1, 0.5, 1.0, 5.0, 10.0],  # Finer alpha grid
+            'fit_intercept': [True],  # True almost always performs better
+            'solver': ['lsqr', 'saga']  # These solvers work best for our data
         }
     },
     'Huber Regression': {
-        'model': HuberRegressor(),
+        'model': HuberRegressor(fit_intercept=True),
         'params': {
             'alpha': [0.0001, 0.001, 0.01, 0.1],
-            'epsilon': [1.1, 1.35, 1.5, 2.0],
-            'max_iter': [100, 500, 1000]
+            'epsilon': [1.1, 1.35, 1.5, 1.75, 2.0],  # Wider range to handle outliers
+            'max_iter': [500, 1000, 2000]  # Increase for convergence
         }
     },
     'RANSAC Regression': {
         'model': RANSACRegressor(random_state=42),
         'params': {
-            'min_samples': [0.1, 0.5, 0.9],
-            'max_trials': [50, 100, 200],
+            'min_samples': [0.1, 0.3, 0.5],
+            'max_trials': [100, 200],
             'loss': ['absolute_loss', 'squared_loss']
         }
     },
     'Random Forest': {
-        'model': RandomForestRegressor(random_state=42),
+        'model': RandomForestRegressor(random_state=42, n_jobs=-1),  # Use parallel processing
         'params': {
-            'n_estimators': [50, 100, 200],
-            'max_depth': [None, 10, 20, 30],
-            'min_samples_split': [2, 5, 10],
+            'n_estimators': [100, 150, 200, 300],  # More trees for better performance
+            'max_depth': [10, 15, 20, 25, None],   # Deeper trees for complex relationships
+            'min_samples_split': [2, 5, 8],
             'min_samples_leaf': [1, 2, 4],
-            'bootstrap': [True, False]
+            'max_features': ['sqrt', 'log2', None],  # Try different feature selection methods
+            'bootstrap': [True]  # Bootstrap is almost always better
         }
     },
     'Gradient Boosting': {
         'model': GradientBoostingRegressor(random_state=42),
         'params': {
-            'n_estimators': [50, 100, 200],
-            'learning_rate': [0.01, 0.1, 0.2],
-            'max_depth': [3, 5, 7],
-            'min_samples_split': [2, 5, 10],
-            'subsample': [0.8, 0.9, 1.0]
+            'n_estimators': [100, 150, 200, 300],
+            'learning_rate': [0.01, 0.05, 0.1, 0.15],  # Finer learning rate grid
+            'max_depth': [3, 5, 7, 9],                 # Try deeper trees
+            'min_samples_split': [2, 5, 8],
+            'min_samples_leaf': [1, 2, 4],
+            'subsample': [0.7, 0.8, 0.9, 1.0],         # Try more aggressive subsampling
+            'max_features': ['sqrt', 'log2', None]     # Try different feature selection
+        }
+    },
+    'ElasticNet': {  # Add ElasticNet which often works well for CPI prediction
+        'model': ElasticNet(random_state=42, max_iter=2000),
+        'params': {
+            'alpha': [0.001, 0.01, 0.1, 0.5, 1.0],
+            'l1_ratio': [0.1, 0.3, 0.5, 0.7, 0.9],  # Mix between L1 and L2 regularization
+            'fit_intercept': [True],
+            'selection': ['cyclic', 'random']
         }
     }
 }
@@ -212,6 +224,14 @@ def build_models_default(X_train: pd.DataFrame, y_train: pd.Series,
             max_iter=500,
             fit_intercept=True,
             tol=1e-5
+        ),
+        'ElasticNet': ElasticNet(
+            alpha=0.1,
+            l1_ratio=0.5,
+            random_state=42,
+            max_iter=2000,
+            tol=1e-4,
+            selection='random'
         ),
         'Random Forest': RandomForestRegressor(
             n_estimators=150,  # More trees for better performance
