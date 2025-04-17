@@ -266,10 +266,22 @@ def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
     """
     df = data.copy()
     
-    # Create interaction features
+    # Create basic interaction features
     df['IR_LOI'] = df['IR'] * df['LOI']
     df['CPI_per_minute'] = df['CPI'] / df['LOI']
     df['Completes_Log'] = np.log1p(df['Completes'])
+    
+    # Create polynomial features for capturing non-linear relationships
+    df['IR_squared'] = df['IR'] ** 2
+    df['LOI_squared'] = df['LOI'] ** 2
+    df['IR_cubed'] = df['IR'] ** 3
+    df['LOI_cubed'] = df['LOI'] ** 3
+    
+    # Create advanced interaction features
+    df['IR_LOI_ratio'] = df['IR'] / df['LOI'].replace(0, 0.001)  # Avoid division by zero
+    df['IR_sqrt'] = np.sqrt(df['IR'] + 0.001)  # Add small constant to avoid sqrt of negative numbers
+    df['LOI_sqrt'] = np.sqrt(df['LOI'] + 0.001)
+    df['Completes_sqrt'] = np.sqrt(df['Completes'] + 0.001)
     
     # Create country-related features
     if 'Country' in df.columns:
@@ -283,11 +295,12 @@ def engineer_features(data: pd.DataFrame) -> pd.DataFrame:
     if 'IR_Bin' in df.columns and 'LOI_Bin' in df.columns:
         df['IR_LOI_Segment'] = df['IR_Bin'] + '_' + df['LOI_Bin']
         
-    # Feature scaling for modeling
-    numeric_features = ['IR', 'LOI', 'Completes', 'IR_LOI', 'CPI_per_minute', 'Completes_Log']
+    # Feature scaling for modeling - using RobustScaler for better outlier handling
+    numeric_features = ['IR', 'LOI', 'Completes', 'IR_LOI', 'CPI_per_minute', 'Completes_Log',
+                       'IR_squared', 'LOI_squared', 'IR_LOI_ratio', 'IR_sqrt', 'LOI_sqrt']
     for feature in numeric_features:
         if feature in df.columns:
-            scaler = StandardScaler()
+            scaler = RobustScaler()  # Better for data with outliers
             df[f'{feature}_scaled'] = scaler.fit_transform(df[[feature]])
     
     return df
@@ -1543,10 +1556,20 @@ def train_models(X: pd.DataFrame, y: pd.Series) -> Dict[str, Any]:
         logger.error(f"Error training Ridge Regression: {str(e)}")
         models['Ridge Regression'] = DummyModel(y.mean())
     
-    # 3. Random Forest Regression
+    # 3. ElasticNet Regression (Added for better performance with sparse features)
+    try:
+        elastic = ElasticNet(alpha=0.1, l1_ratio=0.5, max_iter=2000, random_state=42)
+        elastic.fit(X, y)
+        models['ElasticNet'] = elastic
+        logger.info("Trained ElasticNet model successfully")
+    except Exception as e:
+        logger.error(f"Error training ElasticNet: {str(e)}")
+        models['ElasticNet'] = DummyModel(y.mean())
+    
+    # 4. Random Forest Regression
     try:
         rf = RandomForestRegressor(
-            n_estimators=100,
+            n_estimators=150,
             max_depth=10,
             min_samples_split=5,
             min_samples_leaf=2,
@@ -1848,6 +1871,20 @@ This section describes the key data fields used in the CPI Analysis & Prediction
 
 ## Future Enhancements
 
+### Recent Enhancements
+
+1. **Advanced Model Selection**
+   - Added ElasticNet regression for improved performance on sparse data
+   - Enhanced cross-validation with multiple performance metrics (MSE, RMSE, MAE, R²)
+   - Implemented model assumptions testing for better explainability
+   - Fixed feature importance rendering for proper visual comparison
+
+2. **Enhanced Feature Engineering**
+   - Added polynomial features to capture non-linear relationships
+   - Created interaction terms between key predictors (IR_LOI)
+   - Implemented robust scaling for better handling of outliers
+   - Optimized hyperparameter tuning ranges for improved model fitting
+
 ### Planned Features
 
 1. **Advanced Analytics**
@@ -1858,7 +1895,7 @@ This section describes the key data fields used in the CPI Analysis & Prediction
 2. **Model Improvements**
    - Ensemble model optimization
    - Hyperparameter tuning automation
-   - Feature importance visualization
+   - Additional model diagnostic visualizations
    - Automated feature selection
 
 3. **User Experience**
