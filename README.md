@@ -42,13 +42,6 @@ See the [Installation & Setup](documentation.md#installation--setup) section in 
 
 For comprehensive documentation on the codebase, architecture, and features, see [documentation.md](documentation.md).
 
-## Screenshots
-
-![Dashboard Overview](screenshots/dashboard_overview.png)
-*Main dashboard overview showing key metrics*
-
-![CPI Prediction Tool](screenshots/prediction_tool.png)
-*Interactive prediction tool for estimating optimal CPI*
 
 ## License
 

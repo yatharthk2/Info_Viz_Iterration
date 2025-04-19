@@ -1735,7 +1735,7 @@ This section describes the key data fields used in the CPI Analysis & Prediction
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/cpi-analysis-dashboard.git
+   git clone https://github.com/shriyansh24/Info_Viz_Iterration.git
    cd cpi-analysis-dashboard
    ```
 
